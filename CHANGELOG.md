@@ -4,6 +4,9 @@ All notable changes. Versions follow [SemVer](https://semver.org/); the notes of
 
 ## [Unreleased]
 
+### Fixed
+- The app closed when swiping to a panel that had not been shown yet (the third one, for example). It was a bug of Compose 1.12 triggered by the breadcrumb inside Material's top bar; the panels now use a top bar of their own that avoids it.
+
 ### Changed
 - Updated libraries: OkHttp 5.5, sshj 0.41.1, smbj 0.15, Commons Compress 1.28, XZ 1.12 and Bouncy Castle 1.86 (kept on one version because sshj and smbj ask for different ones).
 
