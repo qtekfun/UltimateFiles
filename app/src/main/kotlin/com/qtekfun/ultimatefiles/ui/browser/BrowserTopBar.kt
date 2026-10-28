@@ -19,7 +19,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +33,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.qtekfun.ultimatefiles.R
+import com.qtekfun.ultimatefiles.ui.components.PanelTopBar
 import com.qtekfun.ultimatefiles.core.model.BreadcrumbSegment
 import com.qtekfun.ultimatefiles.core.model.SortField
 import com.qtekfun.ultimatefiles.core.model.SortOrder
@@ -64,7 +64,7 @@ fun BrowserTopBar(
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
 ) {
     var menuOpen by rememberSaveable { mutableStateOf(false) }
-    TopAppBar(
+    PanelTopBar(
         modifier = modifier,
         windowInsets = windowInsets,
         title = {

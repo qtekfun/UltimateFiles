@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.qtekfun.ultimatefiles.R
+import com.qtekfun.ultimatefiles.ui.components.PanelTopBar
 
 /**
  * Contextual action bar that replaces the top bar while items are selected: counter, direct
@@ -49,15 +49,13 @@ fun SelectionActionBar(
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
 ) {
     var menuOpen by rememberSaveable { mutableStateOf(false) }
-    TopAppBar(
+    PanelTopBar(
         modifier = modifier,
         windowInsets = windowInsets,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            navigationIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            actionIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        ),
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        titleColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        navigationIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        actionIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
         title = { Text(stringResource(R.string.selection_count, selectedCount)) },
         navigationIcon = {
             IconButton(onClick = onClearSelection) {
