@@ -1,0 +1,2 @@
+- Fix: the app closed when swiping to a panel that had not been shown yet
+- Updated libraries (OkHttp 5, sshj, smbj, Commons Compress, XZ, Bouncy Castle)
