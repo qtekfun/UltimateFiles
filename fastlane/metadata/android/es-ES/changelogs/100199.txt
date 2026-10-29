@@ -1,0 +1,2 @@
+- Arreglo: la app se cerraba al deslizar a un panel que aún no se había mostrado
+- Librerías actualizadas (OkHttp 5, sshj, smbj, Commons Compress, XZ, Bouncy Castle)

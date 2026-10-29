@@ -4,6 +4,8 @@ All notable changes. Versions follow [SemVer](https://semver.org/); the notes of
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-10-28
+
 ### Fixed
 - The app closed when swiping to a panel that had not been shown yet (the third one, for example). It was a bug of Compose 1.12 triggered by the breadcrumb inside Material's top bar; the panels now use a top bar of their own that avoids it.
 
