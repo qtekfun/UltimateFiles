@@ -3,6 +3,7 @@ package com.qtekfun.ultimatefiles.data.service
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import android.net.wifi.WifiManager
 import android.os.PowerManager
@@ -77,9 +78,8 @@ class FileTransferForegroundService : Service(), KoinComponent {
                 .apply { acquire(WAKE_LOCK_TIMEOUT_MILLIS) }
         }
         if (wifiLock?.isHeld != true) {
-            @Suppress("DEPRECATION") // still the only mode that keeps the radio awake with the screen off
             wifiLock = applicationContext.getSystemService(WifiManager::class.java)
-                ?.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ultimatefiles:transfer")
+                ?.createWifiLock(transferWifiLockMode(Build.VERSION.SDK_INT), "ultimatefiles:transfer")
                 ?.apply {
                     setReferenceCounted(false)
                     acquire()

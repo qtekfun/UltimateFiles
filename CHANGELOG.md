@@ -4,6 +4,9 @@ All notable changes. Versions follow [SemVer](https://semver.org/); the notes of
 
 ## [Unreleased]
 
+### Changed
+- Transfers ask for the Wi-Fi low latency lock on Android 10 and later instead of the deprecated high performance one (the system already mapped it to that mode).
+
 ## [0.10.1] - 2026-10-28
 
 ### Fixed
