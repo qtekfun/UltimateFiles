@@ -1,0 +1,1 @@
+- Transfers now use the current Wi-Fi lock mode on Android 10 and later

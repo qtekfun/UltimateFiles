@@ -1,0 +1,1 @@
+- Las transferencias usan ahora el modo de bloqueo Wi-Fi actual en Android 10 y posteriores
