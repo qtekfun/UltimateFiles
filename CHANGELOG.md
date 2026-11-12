@@ -4,6 +4,14 @@ All notable changes. Versions follow [SemVer](https://semver.org/); the notes of
 
 ## [Unreleased]
 
+## [0.10.3] - 2026-11-12
+
+### Fixed
+- On foldables and tablets with a taskbar or dock, the pause and cancel buttons of a running transfer ended up behind it. The transfer bar, the paste bar and the panel bar now keep clear of it.
+
+### Changed
+- Updated build tools and libraries: Android Gradle Plugin 9.5.1, Kotlin 2.4.21, Gradle 9.8.2, DataStore 1.3.0, OkHttp 5.5.1, Apache SSHD 2.20.1 and sshj 0.41.2.
+
 ## [0.10.2] - 2026-10-29
 
 ### Changed
