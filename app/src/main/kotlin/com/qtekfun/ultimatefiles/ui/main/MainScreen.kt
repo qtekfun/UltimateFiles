@@ -108,6 +108,9 @@ import com.qtekfun.ultimatefiles.ui.components.requestIgnoreBatteryOptimizations
 import com.qtekfun.ultimatefiles.ui.components.ConflictDialog
 import com.qtekfun.ultimatefiles.ui.components.DropActionDialog
 import com.qtekfun.ultimatefiles.ui.components.TransferProgressBar
+import com.qtekfun.ultimatefiles.ui.components.dockBottomInsets
+import com.qtekfun.ultimatefiles.ui.components.isTransferBarShown
+import androidx.compose.foundation.layout.consumeWindowInsets
 import com.qtekfun.ultimatefiles.data.thumbnail.ThumbnailLoader
 import com.qtekfun.ultimatefiles.ui.browser.LocalThumbnailLoader
 import com.qtekfun.ultimatefiles.ui.dualpanel.DualPanelScaffold
@@ -272,7 +275,13 @@ fun MainScreen() {
             },
         ) {
             Column(Modifier.fillMaxSize()) {
-                Box(Modifier.weight(1f)) {
+                // The progress bar below already keeps clear of the dock, so the screen above must not do it twice.
+                val dockInsets = dockBottomInsets
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .then(if (isTransferBarShown(transfer.progress)) Modifier.consumeWindowInsets(dockInsets) else Modifier),
+                ) {
                     SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).zIndex(1f)) { data ->
                         ConnectionAwareSnackbar(data, onEditAccount = ::editAccountById)
                     }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -46,9 +47,12 @@ fun TransferProgressBar(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (progress == null || progress.status !in ACTIVE) return
+    if (progress == null || !isTransferBarShown(progress)) return
     Surface(modifier = modifier.fillMaxWidth(), tonalElevation = 2.dp) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.windowInsetsPadding(dockFullWidthInsets).padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = progress.currentName.ifEmpty { stringResource(R.string.transfer_preparing) },
@@ -106,6 +110,9 @@ fun TransferProgressBar(
         }
     }
 }
+
+/** Whether [TransferProgressBar] draws anything for [progress]. */
+fun isTransferBarShown(progress: TransferProgress?): Boolean = progress != null && progress.status in ACTIVE
 
 private val ACTIVE = setOf(
     TransferStatus.RUNNING,
