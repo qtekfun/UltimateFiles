@@ -7,7 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import com.qtekfun.ultimatefiles.ui.components.dockBottomInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
@@ -71,7 +72,7 @@ fun PanelBar(
         Box {
             Row(
                 modifier = Modifier
-                    .then(if (atTop) Modifier.statusBarsPadding() else Modifier.navigationBarsPadding())
+                    .then(if (atTop) Modifier.statusBarsPadding() else Modifier.windowInsetsPadding(dockBottomInsets))
                     .heightIn(min = 48.dp)
                     .alpha(if (isActive) 1f else 0.65f),
                 verticalAlignment = Alignment.CenterVertically,

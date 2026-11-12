@@ -15,6 +15,7 @@ import com.qtekfun.ultimatefiles.ui.components.PlaceholderTone
 import com.qtekfun.ultimatefiles.ui.components.StatePlaceholder
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import com.qtekfun.ultimatefiles.ui.components.dockBottomInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -161,7 +162,7 @@ fun BrowserScreen(
     }
 
     Scaffold(
-        modifier = if (consumeNavigationBar) panelModifier.consumeWindowInsets(WindowInsets.navigationBars) else panelModifier,
+        modifier = if (consumeNavigationBar) panelModifier.consumeWindowInsets(dockBottomInsets) else panelModifier,
         contentWindowInsets = if (consumeNavigationBar) {
             WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)
         } else {
@@ -250,7 +251,7 @@ fun BrowserScreen(
                     onDragStart = { onEvent(BrowserEvent.StartDrag(it)) },
                     onDropInside = { onEvent(BrowserEvent.DropItems(it)) },
                     contentPadding = if (clipboard == null && !consumeNavigationBar) {
-                        WindowInsets.navigationBars.asPaddingValues()
+                        dockBottomInsets.asPaddingValues()
                     } else {
                         PaddingValues()
                     },
