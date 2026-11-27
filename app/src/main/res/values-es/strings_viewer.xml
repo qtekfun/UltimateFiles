@@ -51,4 +51,12 @@
     <string name="player_mute">Silenciar</string>
     <string name="player_seek">Posición</string>
     <string name="player_speed">%1$s×</string>
+    <string name="editor_show_preview">Vista previa</string>
+    <string name="editor_show_source">Ver el código</string>
+    <string name="open_as_title">Abrir %1$s como…</string>
+    <string name="open_as_text">Texto</string>
+    <string name="open_as_image">Imagen</string>
+    <string name="open_as_pdf">PDF</string>
+    <string name="open_as_media">Audio o vídeo</string>
+    <string name="open_as_other_app">Otra aplicación</string>
 </resources>

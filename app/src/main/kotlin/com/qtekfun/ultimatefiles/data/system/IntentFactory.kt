@@ -26,12 +26,15 @@ class IntentFactory(private val context: Context) {
 
     /** The in-app viewer for [item], or null when its type is not one the viewer can show. */
     fun viewer(item: FileItem): Intent? {
-        val kind = ViewerKind.of(item.name, item.mimeType ?: MimeTypes.fromName(item.name)) ?: return null
+        val mime = item.mimeType ?: MimeTypes.fromName(item.name)
+        val kind = ViewerKind.of(item.name, mime)
+        // Without a kind the viewer asks how to open the file.
+        if (kind == null && !ViewerKind.isUnknown(item.name, mime)) return null
         return Intent(context, ViewerActivity::class.java)
             .setData(uriFor(item))
             .putExtra(ViewerActivity.EXTRA_NAME, item.name)
             .putExtra(ViewerActivity.EXTRA_PATH, item.path)
-            .putExtra(ViewerActivity.EXTRA_KIND, kind.name)
+            .putExtra(ViewerActivity.EXTRA_KIND, kind?.name)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 

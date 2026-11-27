@@ -135,7 +135,8 @@ class BrowserViewModel(
                 ArchiveFormat.of(event.item.name) != null -> load(ArchivePaths.rootOf(event.item.path))
                 ArchivePaths.isArchivePath(event.item.path) -> emit(BrowserEffect.Message(R.string.error_archive_open))
                 event.item.isRemote() -> emit(BrowserEffect.Message(R.string.error_remote_open))
-                ViewerKind.of(event.item.name, event.item.mimeType) != null -> emit(BrowserEffect.OpenViewer(event.item))
+                ViewerKind.of(event.item.name, event.item.mimeType) != null ||
+                    ViewerKind.isUnknown(event.item.name, event.item.mimeType ?: MimeTypes.fromName(event.item.name)) -> emit(BrowserEffect.OpenViewer(event.item))
                 else -> emit(BrowserEffect.OpenFile(event.item, false))
             }
             is BrowserEvent.OpenWith ->

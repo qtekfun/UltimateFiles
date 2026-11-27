@@ -2,6 +2,7 @@ package com.qtekfun.ultimatefiles.ui.viewer
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,17 +18,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -64,6 +68,7 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -76,8 +81,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.qtekfun.ultimatefiles.R
+import com.qtekfun.ultimatefiles.domain.usecase.SyntaxHighlighter
 import com.qtekfun.ultimatefiles.domain.usecase.TextReadOnly
 import com.qtekfun.ultimatefiles.domain.usecase.TextSearch
+import com.qtekfun.ultimatefiles.domain.usecase.TokenKind
 
 /** Find bar contents; [current] indexes the matches of [query]. */
 private data class FindState(val query: String = "", val replacement: String = "", val current: Int = 0)
@@ -90,6 +97,8 @@ internal fun TextEditorScreen(name: String, viewModel: TextEditorViewModel, onCl
     val editable = !state.loading && state.readOnly == null
     var find by remember { mutableStateOf<FindState?>(null) }
     var menu by rememberSaveable { mutableStateOf(false) }
+    val markdown = name.substringAfterLast('.', "").lowercase() in setOf("md", "markdown")
+    var preview by rememberSaveable { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val matches = remember(find?.query, field.text.toString()) { TextSearch.matches(field.text, find?.query.orEmpty()) }
     val currentMatch = find?.let { if (matches.isEmpty()) -1 else it.current.mod(matches.size) } ?: -1
@@ -135,7 +144,17 @@ internal fun TextEditorScreen(name: String, viewModel: TextEditorViewModel, onCl
                             viewModel.onEvent(EditorEvent.Save)
                         }
                     }
-                    Action(Icons.Filled.Search, R.string.editor_find, !state.loading) {
+                    if (markdown) {
+                        Action(
+                            if (preview) Icons.Filled.Edit else Icons.Filled.Visibility,
+                            if (preview) R.string.editor_show_source else R.string.editor_show_preview,
+                            !state.loading,
+                        ) {
+                            preview = !preview
+                            find = null
+                        }
+                    }
+                    Action(Icons.Filled.Search, R.string.editor_find, !state.loading && !preview) {
                         find = if (find == null) FindState() else null
                     }
                     Box {
@@ -195,8 +214,11 @@ internal fun TextEditorScreen(name: String, viewModel: TextEditorViewModel, onCl
             }
             if (state.loading) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+            } else if (preview) {
+                MarkdownPreview(field.text.toString(), Modifier.fillMaxSize())
             } else {
                 EditorBody(
+                    name = name,
                     viewModel = viewModel,
                     state = state,
                     match = if (currentMatch >= 0) matches[currentMatch] else -1,
@@ -293,8 +315,9 @@ private fun FindBar(
 }
 
 /** The text with its line-number gutter. Without word wrap the field is as wide as its longest line and pans sideways. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun EditorBody(viewModel: TextEditorViewModel, state: EditorState, match: Int, matchLength: Int) {
+private fun EditorBody(name: String, viewModel: TextEditorViewModel, state: EditorState, match: Int, matchLength: Int) {
     val field = viewModel.field
     val vertical = rememberScrollState()
     val horizontal = rememberScrollState()
@@ -309,6 +332,20 @@ private fun EditorBody(viewModel: TextEditorViewModel, state: EditorState, match
     val numberStyle = style.copy(color = MaterialTheme.colorScheme.outline)
     val highlight = MaterialTheme.colorScheme.tertiaryContainer
     val measurer = rememberTextMeasurer()
+    val colors = MaterialTheme.colorScheme
+    val highlighting = remember(name, colors) {
+        OutputTransformation {
+            SyntaxHighlighter.tokens(name, asCharSequence()).forEach {
+                val color = when (it.kind) {
+                    TokenKind.COMMENT -> colors.outline
+                    TokenKind.STRING -> colors.tertiary
+                    TokenKind.NUMBER -> colors.secondary
+                    TokenKind.KEYWORD, TokenKind.TAG -> colors.primary
+                }
+                addStyle(SpanStyle(color = color), it.start, it.end)
+            }
+        }
+    }
     val inset = 8.dp
     val insetPx = with(LocalDensity.current) { inset.toPx() }
 
@@ -349,6 +386,7 @@ private fun EditorBody(viewModel: TextEditorViewModel, state: EditorState, match
                     state = field,
                     readOnly = state.readOnly != null || state.saving,
                     textStyle = style,
+                    outputTransformation = highlighting,
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     lineLimits = TextFieldLineLimits.MultiLine(),
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(

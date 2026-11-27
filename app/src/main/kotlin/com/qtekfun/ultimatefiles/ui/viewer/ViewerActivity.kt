@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.ui.viewer
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,7 +18,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,8 +46,10 @@ class ViewerActivity : ComponentActivity() {
         val uri: Uri? = intent.data
         val name = intent.getStringExtra(EXTRA_NAME).orEmpty()
         val path = intent.getStringExtra(EXTRA_PATH)
-        val kind = intent.getStringExtra(EXTRA_KIND)?.let { runCatching { ViewerKind.valueOf(it) }.getOrNull() }
+        val declared = intent.getStringExtra(EXTRA_KIND)?.let { runCatching { ViewerKind.valueOf(it) }.getOrNull() }
         setContent {
+            // Saved, so the choice made in "open as" survives the activity being recreated.
+            var kind by rememberSaveable { mutableStateOf(declared) }
             val koin = remember { KoinPlatform.getKoin() }
             val settings = viewModel<SettingsViewModel>(
                 factory = viewModelFactory { initializer { koin.get<SettingsViewModel>() } },
@@ -53,7 +59,9 @@ class ViewerActivity : ComponentActivity() {
                 themeMode = preferences?.themeMode ?: ThemeMode.SYSTEM,
                 dynamicColor = preferences?.dynamicColor ?: true,
             ) {
-                if (kind == ViewerKind.TEXT && path != null) {
+                if (kind == null && uri != null) {
+                    OpenAsScreen(name = name, onKind = { kind = it }, onOtherApp = { openElsewhere(uri) }, onBack = { finish() })
+                } else if (kind == ViewerKind.TEXT && path != null) {
                     val editor = viewModel<TextEditorViewModel>(
                         factory = viewModelFactory { initializer { TextEditorViewModel(koin.get(), path, koin.get()) } },
                     )
@@ -87,6 +95,13 @@ class ViewerActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun openElsewhere(uri: Uri) {
+        val view = Intent(Intent.ACTION_VIEW).setDataAndType(uri, "*/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        // The chooser itself reports that no application can open the file.
+        startActivity(Intent.createChooser(view, null))
+        finish()
     }
 
     companion object {

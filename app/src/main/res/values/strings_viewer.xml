@@ -51,4 +51,12 @@
     <string name="player_mute">Mute</string>
     <string name="player_seek">Position</string>
     <string name="player_speed">%1$s×</string>
+    <string name="editor_show_preview">Preview</string>
+    <string name="editor_show_source">Show source</string>
+    <string name="open_as_title">Open %1$s as…</string>
+    <string name="open_as_text">Text</string>
+    <string name="open_as_image">Image</string>
+    <string name="open_as_pdf">PDF</string>
+    <string name="open_as_media">Audio or video</string>
+    <string name="open_as_other_app">Another app</string>
 </resources>
