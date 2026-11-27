@@ -1,5 +1,7 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import com.qtekfun.ultimatefiles.domain.usecase.Category
+import com.qtekfun.ultimatefiles.domain.usecase.CategoryPaths
 import com.qtekfun.ultimatefiles.core.model.Favorite
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -102,7 +104,7 @@ class BrowserViewModel(
         viewModelScope.launch {
             // Both panels follow the shared sort preference.
             preferences.preferences.map { it.sortOrder }.distinctUntilChanged().collect { order ->
-                _state.update { it.copy(sortOrder = order, items = it.items.sortedByOrder(order)) }
+                _state.update { it.copy(sortOrder = order, items = ordered(it.currentPath, it.items, order)) }
             }
         }
         viewModelScope.launch {
@@ -163,15 +165,15 @@ class BrowserViewModel(
                 clipboardManager.cut(_state.value.currentPath.orEmpty(), event.items)
                 clearSelection()
             }
-            BrowserEvent.Paste -> paste()
+            BrowserEvent.Paste -> unlessCategory { paste() }
             BrowserEvent.CancelClipboard -> clipboardManager.clear()
             is BrowserEvent.Share -> share(event.items)
             is BrowserEvent.RequestDelete -> showDialog(BrowserDialog.ConfirmDelete(event.items))
             is BrowserEvent.RequestRename -> showDialog(BrowserDialog.Rename(event.item))
-            BrowserEvent.RequestNewFolder -> showDialog(BrowserDialog.NewFolder)
-            is BrowserEvent.RequestCompress -> showDialog(BrowserDialog.Compress(event.items))
-            is BrowserEvent.Extract -> archive(OperationType.EXTRACT, event.items, null)
-            BrowserEvent.RequestNewFile -> showDialog(BrowserDialog.NewFile)
+            BrowserEvent.RequestNewFolder -> unlessCategory { showDialog(BrowserDialog.NewFolder) }
+            is BrowserEvent.RequestCompress -> unlessCategory { showDialog(BrowserDialog.Compress(event.items)) }
+            is BrowserEvent.Extract -> unlessCategory { archive(OperationType.EXTRACT, event.items, null) }
+            BrowserEvent.RequestNewFile -> unlessCategory { showDialog(BrowserDialog.NewFile) }
             is BrowserEvent.ShowProperties -> showProperties(event.item)
             is BrowserEvent.ConfirmName -> confirmName(event.name)
             BrowserEvent.ConfirmDelete -> confirmDelete()
@@ -182,7 +184,12 @@ class BrowserViewModel(
             is BrowserEvent.InstallPermissionResult -> onInstallPermissionResult(event.granted)
             is BrowserEvent.ToggleFavorite -> toggleFavorite(event.item)
             is BrowserEvent.StartDrag -> startDrag(event.item)
-            is BrowserEvent.DropItems -> dragDrop.requestDrop(event.targetPath)
+            is BrowserEvent.DropItems ->
+                if (CategoryPaths.isCategoryPath(event.targetPath)) {
+                    emit(BrowserEffect.Message(R.string.error_category_read_only))
+                } else {
+                    dragDrop.requestDrop(event.targetPath)
+                }
         }
     }
 
@@ -251,7 +258,7 @@ class BrowserViewModel(
                     val parent = repository.parentOf(path)
                     _state.update { s ->
                         val sameFolder = s.currentPath == path
-                        val sorted = files.sortedByOrder(s.sortOrder)
+                        val sorted = ordered(path, files, s.sortOrder)
                         s.copy(
                             currentPath = path,
                             parentPath = parent,
@@ -399,6 +406,18 @@ class BrowserViewModel(
             refresh()
         }
     }
+
+    /** Runs [action], which writes into the current folder, only where there is one to write into. */
+    private fun unlessCategory(action: () -> Unit) {
+        if (_state.value.isCategory) emit(BrowserEffect.Message(R.string.error_category_read_only)) else action()
+    }
+
+    private fun ordered(path: String?, files: List<FileItem>, order: SortOrder): List<FileItem> =
+        if (path == CategoryPaths.pathOf(Category.RECENTS)) {
+            files.sortedByDescending { it.lastModifiedMillis }
+        } else {
+            files.sortedByOrder(order)
+        }
 
     /** Queues packing [items] into a ZIP called [archiveName], or unpacking each of them, in the current folder. */
     private fun archive(operation: OperationType, items: List<FileItem>, archiveName: String?) {

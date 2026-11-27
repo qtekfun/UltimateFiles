@@ -202,6 +202,7 @@ fun BrowserScreen(
                     onSearchQueryChange = { onEvent(BrowserEvent.SetSearchQuery(it)) },
                     onNewFolder = { onEvent(BrowserEvent.RequestNewFolder) },
                     onNewFile = { onEvent(BrowserEvent.RequestNewFile) },
+                    canCreate = !state.isCategory,
                     onSortSelected = { onEvent(BrowserEvent.SortBy(it)) },
                     onSelectAll = { onEvent(BrowserEvent.SelectAll) },
                     onAnalyze = state.currentPath?.takeIf { onAnalyze != null && SizeAnalyzer.supports(it) }?.let { path ->
@@ -228,7 +229,7 @@ fun BrowserScreen(
                 )
             } else {
                 DockedPasteBar(
-                    clipboard = clipboard,
+                    clipboard = clipboard.takeUnless { state.isCategory },
                     onPaste = { onEvent(BrowserEvent.Paste) },
                     onCancel = { onEvent(BrowserEvent.CancelClipboard) },
                 )
@@ -263,6 +264,7 @@ fun BrowserScreen(
                     ListHeader(
                         count = state.visibleItems.size,
                         sortOrder = state.sortOrder,
+                        sortable = state.isSortable,
                         onSortSelected = { onEvent(BrowserEvent.SortBy(it)) },
                     )
                     FileList(
@@ -278,7 +280,7 @@ fun BrowserScreen(
                         onAction = { action, item -> onEvent(action.toEvent(item)) },
                         onDragStart = { onEvent(BrowserEvent.StartDrag(it)) },
                         onDropInside = { onEvent(BrowserEvent.DropItems(it)) },
-                        contentPadding = if (clipboard == null && !state.isSelecting && !consumeNavigationBar) {
+                        contentPadding = if ((clipboard == null || state.isCategory) && !state.isSelecting && !consumeNavigationBar) {
                             dockBottomInsets.asPaddingValues()
                         } else {
                             PaddingValues()

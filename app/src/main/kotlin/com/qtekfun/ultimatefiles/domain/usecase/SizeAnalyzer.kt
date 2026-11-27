@@ -99,7 +99,8 @@ class SizeAnalyzer(
     companion object {
         /** Whether a folder at [path] can be analysed: on this device (internal storage, USB, SD, SAF), not on a server or in an archive. */
         fun supports(path: String): Boolean =
-            !(path.startsWith("dav://") || path.startsWith("sftp://") || path.startsWith("smb://") || ArchivePaths.isArchivePath(path))
+            !(path.startsWith("dav://") || path.startsWith("sftp://") || path.startsWith("smb://") || ArchivePaths.isArchivePath(path) ||
+                CategoryPaths.isCategoryPath(path))
 
         const val MAX_CHILDREN = 200
         const val MAX_DEPTH = 48

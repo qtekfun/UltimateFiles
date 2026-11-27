@@ -1,5 +1,13 @@
 package com.qtekfun.ultimatefiles.ui.main
 
+import com.qtekfun.ultimatefiles.ui.browser.tileColor
+import com.qtekfun.ultimatefiles.ui.browser.icon
+import com.qtekfun.ultimatefiles.data.system.labelRes
+import com.qtekfun.ultimatefiles.core.util.FileKind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.filled.Schedule
+import com.qtekfun.ultimatefiles.domain.usecase.Category
+import com.qtekfun.ultimatefiles.domain.usecase.CategoryPaths
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -132,6 +140,8 @@ fun AppDrawer(
                     }
                 }
                 DrawerRow(Icons.Filled.Add, stringResource(R.string.drawer_add_storage), onAddStorage)
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                CategoryGrid { onOpen(CategoryPaths.pathOf(it)) }
                 if (shortcuts.isNotEmpty()) HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 shortcuts.forEach { shortcut ->
                     DrawerRow(shortcut.kind.icon(), stringResource(shortcut.labelRes), { onOpen(shortcut.path) })
@@ -239,6 +249,56 @@ private fun VolumeCard(
             actions()
         }
     }
+}
+
+/** The category shortcuts, three to a row, in the colours of the files they gather. */
+@Composable
+private fun CategoryGrid(onOpen: (Category) -> Unit) {
+    Column(Modifier.padding(horizontal = 12.dp)) {
+        Category.entries.chunked(3).forEach { row ->
+            Row {
+                row.forEach { category ->
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(MaterialTheme.shapes.small)
+                            .clickable(role = Role.Button) { onOpen(category) }
+                            .padding(vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        val color = category.kind()?.tileColor()
+                        Box(
+                            Modifier.size(42.dp).clip(CircleShape).background(color ?: MaterialTheme.colorScheme.primary),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = category.kind()?.icon() ?: Icons.Filled.Schedule,
+                                contentDescription = null,
+                                tint = if (color != null) Color.White else MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
+                        Text(
+                            text = stringResource(category.labelRes()),
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** The kind of file a category gathers; null for the recent ones, which are of any kind. */
+private fun Category.kind(): FileKind? = when (this) {
+    Category.IMAGES -> FileKind.IMAGE
+    Category.VIDEO -> FileKind.VIDEO
+    Category.AUDIO -> FileKind.AUDIO
+    Category.DOCUMENTS -> FileKind.TEXT
+    Category.APKS -> FileKind.APK
+    Category.RECENTS -> null
 }
 
 /** A thin bar of how full the volume is and how much room is left; nothing for volumes that cannot tell. */

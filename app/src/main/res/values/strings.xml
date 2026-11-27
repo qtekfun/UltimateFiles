@@ -341,4 +341,11 @@
     <string name="action_add_favorite">Add to favorites</string>
     <string name="action_remove_favorite">Remove from favorites</string>
     <string name="drawer_favorites">Favorites</string>
+    <string name="category_images">Images</string>
+    <string name="category_video">Video</string>
+    <string name="category_audio">Audio</string>
+    <string name="category_documents">Documents</string>
+    <string name="category_apks">APKs</string>
+    <string name="category_recents">Recent</string>
+    <string name="error_category_read_only">Not possible here: these files come from several folders.</string>
 </resources>

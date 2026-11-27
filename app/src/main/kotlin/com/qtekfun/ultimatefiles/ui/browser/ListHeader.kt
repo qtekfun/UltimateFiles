@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,17 +32,24 @@ import com.qtekfun.ultimatefiles.ui.components.labelRes
 
 /** Above the list: how many entries it shows, and the order they are in, which can be changed from here. */
 @Composable
-fun ListHeader(count: Int, sortOrder: SortOrder, onSortSelected: (SortField) -> Unit, modifier: Modifier = Modifier) {
+fun ListHeader(
+    count: Int,
+    sortOrder: SortOrder,
+    onSortSelected: (SortField) -> Unit,
+    modifier: Modifier = Modifier,
+    /** False where the order is fixed; only the count is shown then. */
+    sortable: Boolean = true,
+) {
     var menuOpen by remember { mutableStateOf(false) }
     val arrow = if (sortOrder.ascending) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward
-    Row(modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = pluralStringResource(R.plurals.item_count, count, count),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
-        Box {
+        if (sortable) Box {
             TextButton(onClick = { menuOpen = true }) {
                 Text(stringResource(sortOrder.field.labelRes()))
                 Icon(

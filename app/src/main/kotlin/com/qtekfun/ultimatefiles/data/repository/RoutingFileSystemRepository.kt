@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.data.repository
 
+import com.qtekfun.ultimatefiles.domain.usecase.CategoryPaths
 import com.qtekfun.ultimatefiles.core.model.FileItem
 import com.qtekfun.ultimatefiles.core.model.StorageVolume
 import com.qtekfun.ultimatefiles.data.system.RemovableStorage
@@ -16,6 +17,7 @@ class RoutingFileSystemRepository(
     private val sftp: FileSystemRepository,
     private val archive: FileSystemRepository,
     private val smb: FileSystemRepository = archive,
+    private val categories: FileSystemRepository = archive,
 ) : FileSystemRepository {
 
     private fun backendFor(path: String) = when {
@@ -24,6 +26,7 @@ class RoutingFileSystemRepository(
         path.startsWith(SftpFileSystemRepository.SCHEME) -> sftp
         path.startsWith(SmbFileSystemRepository.SCHEME) -> smb
         ArchivePaths.isArchivePath(path) -> archive
+        CategoryPaths.isCategoryPath(path) -> categories
         else -> local
     }
 

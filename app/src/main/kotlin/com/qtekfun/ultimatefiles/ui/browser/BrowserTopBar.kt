@@ -77,6 +77,8 @@ fun BrowserTopBar(
     volumeName: String? = null,
     /** Free room on that volume, when the backend can tell. */
     freeBytes: Long? = null,
+    /** False where nothing can be created, which hides new folder and new file. */
+    canCreate: Boolean = true,
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
 ) {
     var menuOpen by rememberSaveable { mutableStateOf(false) }
@@ -128,8 +130,10 @@ fun BrowserTopBar(
                 },
                 actions = {
                     if (searchQuery == null) {
-                        IconButton(onClick = onNewFolder) {
-                            Icon(Icons.Filled.CreateNewFolder, contentDescription = stringResource(R.string.action_new_folder))
+                        if (canCreate) {
+                            IconButton(onClick = onNewFolder) {
+                                Icon(Icons.Filled.CreateNewFolder, contentDescription = stringResource(R.string.action_new_folder))
+                            }
                         }
                         IconButton(onClick = onSearchClick) {
                             Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
@@ -140,11 +144,13 @@ fun BrowserTopBar(
                             Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_new_file)) },
-                                onClick = { menuOpen = false; onNewFile() },
-                            )
-                            HorizontalDivider()
+                            if (canCreate) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.action_new_file)) },
+                                    onClick = { menuOpen = false; onNewFile() },
+                                )
+                                HorizontalDivider()
+                            }
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_sort_by)) },
                                 enabled = false,

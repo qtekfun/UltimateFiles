@@ -1,5 +1,7 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import com.qtekfun.ultimatefiles.domain.usecase.Category
+import com.qtekfun.ultimatefiles.domain.usecase.CategoryPaths
 import androidx.annotation.StringRes
 import com.qtekfun.ultimatefiles.core.model.BreadcrumbSegment
 import com.qtekfun.ultimatefiles.core.model.ConnectionProblem
@@ -32,6 +34,11 @@ data class BrowserState(
     val visibleItems: List<FileItem>
         get() = searchQuery?.takeIf { it.isNotBlank() }
             ?.let { query -> items.filter { it.name.contains(query.trim(), ignoreCase = true) } } ?: items
+    /** A category gathers files from many places: nothing can be created, pasted or packed in it. */
+    val isCategory: Boolean get() = currentPath?.let(CategoryPaths::isCategoryPath) == true
+
+    /** The recent files are about when, so they stay newest first whatever order folders are in. */
+    val isSortable: Boolean get() = currentPath != CategoryPaths.pathOf(Category.RECENTS)
     val selectedItems: List<FileItem> get() = items.filter { it.path in selectedPaths }
     val isSelecting: Boolean get() = selectedPaths.isNotEmpty()
 }
