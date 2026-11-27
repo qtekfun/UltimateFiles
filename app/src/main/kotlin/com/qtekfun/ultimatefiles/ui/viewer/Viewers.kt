@@ -2,7 +2,6 @@ package com.qtekfun.ultimatefiles.ui.viewer
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.widget.MediaController
 import android.widget.VideoView
@@ -10,15 +9,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,12 +27,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.qtekfun.ultimatefiles.R
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 private sealed interface Loaded<out T> {
@@ -87,62 +78,6 @@ internal fun ImageViewer(uri: Uri, modifier: Modifier) {
                     .graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY),
             )
         }
-    }
-}
-
-/** PDF pages are rendered one at a time on demand: [PdfRenderer] allows a single open page. */
-@Composable
-internal fun PdfViewer(uri: Uri, modifier: Modifier) {
-    val resolver = LocalContext.current.contentResolver
-    val lock = remember { Mutex() }
-    val renderer by produceState<Loaded<PdfRenderer>>(Loaded.Loading, uri) {
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                val descriptor = resolver.openFileDescriptor(uri, "r") ?: error("Cannot open the file")
-                PdfRenderer(descriptor)
-            }.fold({ Loaded.Ready(it) }, { Loaded.Failed(it.message) })
-        }
-    }
-    DisposableEffect(uri) {
-        onDispose { (renderer as? Loaded.Ready)?.value?.close() }
-    }
-    when (val current = renderer) {
-        Loaded.Loading -> Box(modifier, Alignment.Center) { CircularProgressIndicator() }
-        is Loaded.Failed -> ViewerMessage(R.string.viewer_error, modifier, current.message)
-        is Loaded.Ready -> {
-            val pdf = current.value
-            LazyColumn(modifier, verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-                itemsIndexed(List(pdf.pageCount) { it }) { _, index ->
-                    PdfPage(pdf, index, lock)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PdfPage(pdf: PdfRenderer, index: Int, lock: Mutex) {
-    val widthPx = LocalContext.current.resources.displayMetrics.widthPixels
-    val page by produceState<Bitmap?>(null, index) {
-        value = withContext(Dispatchers.IO) {
-            lock.withLock {
-                runCatching {
-                    pdf.openPage(index).use { page ->
-                        val height = (widthPx * page.height.toFloat() / page.width).toInt().coerceAtLeast(1)
-                        Bitmap.createBitmap(widthPx, height, Bitmap.Config.ARGB_8888).also {
-                            it.eraseColor(android.graphics.Color.WHITE)
-                            page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        }
-                    }
-                }.getOrNull()
-            }
-        }
-    }
-    val bitmap = page
-    if (bitmap == null) {
-        Box(Modifier.fillMaxWidth().padding(vertical = 48.dp), Alignment.Center) { CircularProgressIndicator() }
-    } else {
-        Image(bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxWidth(), contentScale = ContentScale.FillWidth)
     }
 }
 

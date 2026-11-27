@@ -23,6 +23,7 @@ import com.qtekfun.ultimatefiles.data.network.WebDavClient
 import com.qtekfun.ultimatefiles.data.repository.ArchiveFileSystemRepository
 import com.qtekfun.ultimatefiles.data.repository.DataStoreAccountRepository
 import com.qtekfun.ultimatefiles.data.repository.FileDraftStore
+import com.qtekfun.ultimatefiles.data.repository.FileReadingPositionStore
 import com.qtekfun.ultimatefiles.data.repository.FileTransferHistoryRepository
 import com.qtekfun.ultimatefiles.data.repository.FileTransferJournal
 import com.qtekfun.ultimatefiles.data.repository.LocalFileSystemRepository
@@ -48,6 +49,7 @@ import com.qtekfun.ultimatefiles.domain.history.TransferHistoryRepository
 import com.qtekfun.ultimatefiles.domain.repository.AccountRepository
 import com.qtekfun.ultimatefiles.domain.repository.DraftStore
 import com.qtekfun.ultimatefiles.domain.repository.FileSystemRepository
+import com.qtekfun.ultimatefiles.domain.repository.ReadingPositionStore
 import com.qtekfun.ultimatefiles.domain.repository.SecretCipher
 import com.qtekfun.ultimatefiles.domain.repository.UserPreferencesRepository
 import com.qtekfun.ultimatefiles.domain.repository.VolumeChangeSource
@@ -75,6 +77,7 @@ import org.koin.dsl.module
 
 val appModule = module {
     single { ClipboardManager() }
+    single<ReadingPositionStore> { FileReadingPositionStore(File(androidContext().filesDir, "reading-positions.tsv")) }
     single<DraftStore> { FileDraftStore(File(androidContext().filesDir, "editor-drafts")) }
 
     single<StreamCopier> { FileStreamCopier() }

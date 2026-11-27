@@ -59,7 +59,19 @@ class ViewerActivity : ComponentActivity() {
                     )
                     TextEditorScreen(name = name, viewModel = editor, onClose = { finish() })
                 } else {
-                    ViewerScreen(name = name, uri = uri, kind = kind, onBack = { finish() })
+                    val pdf = if (kind == ViewerKind.PDF && uri != null) {
+                        viewModel<PdfViewModel>(
+                            factory = viewModelFactory {
+                                initializer {
+                                    val resolver = applicationContext.contentResolver
+                                    PdfViewModel({ resolver.openFileDescriptor(uri, "r") }, path ?: uri.toString(), koin.get())
+                                }
+                            },
+                        )
+                    } else {
+                        null
+                    }
+                    ViewerScreen(name = name, uri = uri, kind = kind, pdf = pdf, onBack = { finish() })
                 }
             }
         }
@@ -76,7 +88,7 @@ class ViewerActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @androidx.compose.runtime.Composable
-private fun ViewerScreen(name: String, uri: Uri?, kind: ViewerKind?, onBack: () -> Unit) {
+private fun ViewerScreen(name: String, uri: Uri?, kind: ViewerKind?, pdf: PdfViewModel?, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -93,7 +105,7 @@ private fun ViewerScreen(name: String, uri: Uri?, kind: ViewerKind?, onBack: () 
         when {
             uri == null || kind == null -> Text(stringResource(R.string.viewer_unsupported), modifier = content)
             kind == ViewerKind.IMAGE -> ImageViewer(uri, content)
-            kind == ViewerKind.PDF -> PdfViewer(uri, content)
+            pdf != null -> PdfViewer(pdf, content)
             kind == ViewerKind.MEDIA -> MediaViewer(uri, content)
             else -> Text(stringResource(R.string.viewer_unsupported), modifier = content)
         }

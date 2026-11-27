@@ -26,4 +26,9 @@
     <string name="editor_read_only_permission">Read-only: no permission to write this file.</string>
     <string name="editor_recovered">A previous save did not finish. This is the earlier content; save to restore it.</string>
     <string name="editor_restored_draft">Restored your unsaved changes. Undo returns to the saved file.</string>
+    <string name="pdf_page_of">Page %1$d of %2$d</string>
+    <string name="pdf_page_description">Page %1$d</string>
+    <string name="pdf_go_to_page">Go to page</string>
+    <string name="pdf_page_range">Page (1–%1$d)</string>
+    <string name="pdf_go">Go</string>
 </resources>

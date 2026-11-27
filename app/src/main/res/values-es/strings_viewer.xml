@@ -26,4 +26,9 @@
     <string name="editor_read_only_permission">Solo lectura: sin permiso para escribir en este archivo.</string>
     <string name="editor_recovered">Un guardado anterior no terminó. Este es el contenido previo; guarda para restaurarlo.</string>
     <string name="editor_restored_draft">Se han recuperado tus cambios sin guardar. Deshacer vuelve al archivo guardado.</string>
+    <string name="pdf_page_of">Página %1$d de %2$d</string>
+    <string name="pdf_page_description">Página %1$d</string>
+    <string name="pdf_go_to_page">Ir a la página</string>
+    <string name="pdf_page_range">Página (1–%1$d)</string>
+    <string name="pdf_go">Ir</string>
 </resources>
