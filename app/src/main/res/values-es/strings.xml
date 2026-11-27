@@ -334,4 +334,8 @@
     <string name="accent_blue">Azul</string>
     <string name="accent_purple">Morado</string>
     <string name="accent_slate">Pizarra</string>
+    <plurals name="item_count">
+        <item quantity="one">%d elemento</item>
+        <item quantity="other">%d elementos</item>
+    </plurals>
 </resources>

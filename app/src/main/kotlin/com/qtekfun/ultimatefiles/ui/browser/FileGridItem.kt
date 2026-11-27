@@ -1,5 +1,8 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
 import android.content.ClipData
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -14,7 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -53,6 +56,7 @@ fun FileGridItem(
     onDragStart: () -> Unit,
     onDropInside: (String) -> Unit,
     modifier: Modifier = Modifier,
+    entryCount: Int? = null,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     val dropTarget = remember(item.path) {
@@ -64,12 +68,15 @@ fun FileGridItem(
         }
     }
 
-    val highlighted = MaterialTheme.colorScheme.secondaryContainer
-    val container by animateColorAsState(if (selected || menuOpen) highlighted else highlighted.copy(alpha = 0f), label = "cell")
+    val colors = MaterialTheme.colorScheme
+    val highlighted = selected || menuOpen
+    val container by animateColorAsState(if (highlighted) colors.secondaryContainer else colors.surfaceContainerHighest, label = "cell")
+    val outline by animateColorAsState(if (selected) colors.primary else Color.Transparent, label = "cellOutline")
     var cell = modifier
         .padding(4.dp)
         .clip(MaterialTheme.shapes.medium)
         .background(container)
+        .border(2.dp, outline, MaterialTheme.shapes.medium)
         .combinedClickable(onClick = onClick, onLongClick = { menuOpen = true })
     if (dragAndDropEnabled && item.isDirectory) {
         cell = cell.dragAndDropTarget(shouldStartDragAndDrop = { it.isOurDrag() }, target = dropTarget)
@@ -85,7 +92,8 @@ fun FileGridItem(
 
     Box(cell) {
         Column(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             FileTile(item, selected, tileModifier.clickable(onClick = onToggleSelection))
@@ -95,6 +103,20 @@ fun FileGridItem(
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = item.amount(entryCount),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+        if (selected) {
+            Icon(
+                Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).size(20.dp),
             )
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {

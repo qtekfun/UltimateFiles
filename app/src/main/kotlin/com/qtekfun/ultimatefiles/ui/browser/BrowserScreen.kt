@@ -1,5 +1,7 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import android.content.ActivityNotFoundException
 import com.qtekfun.ultimatefiles.domain.usecase.ArchiveFormat
 import com.qtekfun.ultimatefiles.domain.usecase.SizeAnalyzer
@@ -179,19 +181,10 @@ fun BrowserScreen(
         },
         topBar = {
             if (state.isSelecting) {
-                val selected = state.selectedItems
                 SelectionActionBar(
-                    selectedCount = selected.size,
+                    selectedCount = state.selectedItems.size,
                     onClearSelection = { onEvent(BrowserEvent.ClearSelection) },
-                    onCopy = { onEvent(BrowserEvent.Copy(selected)) },
-                    onCut = { onEvent(BrowserEvent.Cut(selected)) },
-                    onDelete = { onEvent(BrowserEvent.RequestDelete(selected)) },
-                    onShare = { onEvent(BrowserEvent.Share(selected)) },
-                    onRename = { selected.singleOrNull()?.let { onEvent(BrowserEvent.RequestRename(it)) } },
-                    onProperties = { selected.singleOrNull()?.let { onEvent(BrowserEvent.ShowProperties(it)) } },
-                    onCompress = { onEvent(BrowserEvent.RequestCompress(selected)) },
-                    onExtract = { onEvent(BrowserEvent.Extract(selected)) },
-                    canExtract = selected.all { !it.isDirectory && !ArchivePaths.isArchivePath(it.path) && ArchiveFormat.of(it.name) != null },
+                    onSelectAll = { onEvent(BrowserEvent.SelectAll) },
                     windowInsets = topInsets,
                 )
             } else {
@@ -219,11 +212,27 @@ fun BrowserScreen(
             }
         },
         bottomBar = {
-            DockedPasteBar(
-                clipboard = clipboard,
-                onPaste = { onEvent(BrowserEvent.Paste) },
-                onCancel = { onEvent(BrowserEvent.CancelClipboard) },
-            )
+            if (state.isSelecting) {
+                val selected = state.selectedItems
+                SelectionDockBar(
+                    selectedCount = selected.size,
+                    onCopy = { onEvent(BrowserEvent.Copy(selected)) },
+                    onCut = { onEvent(BrowserEvent.Cut(selected)) },
+                    onDelete = { onEvent(BrowserEvent.RequestDelete(selected)) },
+                    onShare = { onEvent(BrowserEvent.Share(selected)) },
+                    onRename = { selected.singleOrNull()?.let { onEvent(BrowserEvent.RequestRename(it)) } },
+                    onProperties = { selected.singleOrNull()?.let { onEvent(BrowserEvent.ShowProperties(it)) } },
+                    onCompress = { onEvent(BrowserEvent.RequestCompress(selected)) },
+                    onExtract = { onEvent(BrowserEvent.Extract(selected)) },
+                    canExtract = selected.all { !it.isDirectory && !ArchivePaths.isArchivePath(it.path) && ArchiveFormat.of(it.name) != null },
+                )
+            } else {
+                DockedPasteBar(
+                    clipboard = clipboard,
+                    onPaste = { onEvent(BrowserEvent.Paste) },
+                    onCancel = { onEvent(BrowserEvent.CancelClipboard) },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbar) { data -> ConnectionAwareSnackbar(data, onEditAccount) } },
     ) { padding ->
@@ -250,24 +259,32 @@ fun BrowserScreen(
                         )
                     }
                 }
-                else -> FileList(
-                    items = state.visibleItems,
-                    viewMode = state.viewMode,
-                    selectedPaths = state.selectedPaths,
-                    isSelecting = state.isSelecting,
-                    dragAndDropEnabled = dragAndDropEnabled,
-                    onItemClick = { onEvent(BrowserEvent.OpenItem(it)) },
-                    onToggleSelection = { onEvent(BrowserEvent.ToggleSelection(it)) },
-                    onAction = { action, item -> onEvent(action.toEvent(item)) },
-                    onDragStart = { onEvent(BrowserEvent.StartDrag(it)) },
-                    onDropInside = { onEvent(BrowserEvent.DropItems(it)) },
-                    contentPadding = if (clipboard == null && !consumeNavigationBar) {
-                        dockBottomInsets.asPaddingValues()
-                    } else {
-                        PaddingValues()
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
+                else -> Column(Modifier.fillMaxSize()) {
+                    ListHeader(
+                        count = state.visibleItems.size,
+                        sortOrder = state.sortOrder,
+                        onSortSelected = { onEvent(BrowserEvent.SortBy(it)) },
+                    )
+                    FileList(
+                        items = state.visibleItems,
+                        folderCounts = state.folderCounts,
+                        viewMode = state.viewMode,
+                        selectedPaths = state.selectedPaths,
+                        isSelecting = state.isSelecting,
+                        dragAndDropEnabled = dragAndDropEnabled,
+                        onItemClick = { onEvent(BrowserEvent.OpenItem(it)) },
+                        onToggleSelection = { onEvent(BrowserEvent.ToggleSelection(it)) },
+                        onAction = { action, item -> onEvent(action.toEvent(item)) },
+                        onDragStart = { onEvent(BrowserEvent.StartDrag(it)) },
+                        onDropInside = { onEvent(BrowserEvent.DropItems(it)) },
+                        contentPadding = if (clipboard == null && !state.isSelecting && !consumeNavigationBar) {
+                            dockBottomInsets.asPaddingValues()
+                        } else {
+                            PaddingValues()
+                        },
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                    )
+                }
             }
         }
     }

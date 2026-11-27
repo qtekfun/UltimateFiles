@@ -231,6 +231,17 @@ class BrowserViewModelTest {
     }
 
     @Test
+    fun `folders are given their entry count after the listing`() = runTest {
+        tmp.root.resolve("full").mkdirs()
+        tmp.root.resolve("full/one.txt").writeText("1")
+        loaded()
+        viewModel.onEvent(BrowserEvent.Refresh)
+
+        val state = viewModel.state.first { s -> s.folderCounts.keys.any { it.endsWith("full") } }
+        assertEquals(1, state.folderCounts.entries.single { it.key.endsWith("full") }.value)
+    }
+
+    @Test
     fun `new folder dialog creates the folder`() = runTest {
         loaded()
 

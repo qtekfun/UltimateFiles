@@ -1,5 +1,7 @@
 package com.qtekfun.ultimatefiles.ui.theme
 
+import com.qtekfun.ultimatefiles.ui.browser.tileColor
+import com.qtekfun.ultimatefiles.core.util.FileKind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.qtekfun.ultimatefiles.core.model.AccentColor
@@ -11,6 +13,11 @@ class ThemeContrastTest {
     private fun contrast(a: Color, b: Color): Float {
         val (low, high) = listOf(a.luminance(), b.luminance()).sorted()
         return (high + 0.05f) / (low + 0.05f)
+    }
+
+    @Test
+    fun `white icons are readable on every file tile`() {
+        FileKind.entries.mapNotNull { it.tileColor() }.forEach { assertTrue("$it", contrast(Color.White, it) >= 4.5f) }
     }
 
     @Test

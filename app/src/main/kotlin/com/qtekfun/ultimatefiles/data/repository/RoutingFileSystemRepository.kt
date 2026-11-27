@@ -40,6 +40,8 @@ class RoutingFileSystemRepository(
 
     override suspend fun stat(uriOrPath: String) = backendFor(uriOrPath).stat(uriOrPath)
 
+    override suspend fun childCount(uriOrPath: String) = backendFor(uriOrPath).childCount(uriOrPath)
+
     override suspend fun parentOf(uriOrPath: String) = backendFor(uriOrPath).parentOf(uriOrPath)
 
     override suspend fun createDirectory(parentUriOrPath: String, name: String) =

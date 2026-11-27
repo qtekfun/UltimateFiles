@@ -43,7 +43,8 @@ import com.qtekfun.ultimatefiles.data.thumbnail.ThumbnailPolicy
 /** Where thumbnails come from; null (previews, tests) simply keeps the icons. */
 val LocalThumbnailLoader = staticCompositionLocalOf<ThumbnailLoader?> { null }
 
-private val ListThumbnailSize = 56.dp
+private val ListThumbnailSize = 48.dp
+private val ListTileSize = 42.dp
 private val GridThumbnailSize = 120.dp
 private val ThumbnailShape = RoundedCornerShape(8.dp)
 
@@ -56,7 +57,7 @@ fun FileLeading(item: FileItem, selected: Boolean, modifier: Modifier = Modifier
     if (ThumbnailPolicy.mayHaveThumbnail(item)) {
         MediaThumbnail(item, selected, ListThumbnailSize, modifier.size(ListThumbnailSize))
     } else {
-        IconTile(item, selected, modifier.size(ListThumbnailSize), tileSize = 48.dp, iconSize = 24.dp)
+        IconTile(item, selected, modifier.size(ListThumbnailSize), tileSize = ListTileSize, iconSize = 22.dp)
     }
 }
 
@@ -70,32 +71,42 @@ fun FileTile(item: FileItem, selected: Boolean, modifier: Modifier = Modifier) {
     }
 }
 
-/** Container and content colours of a kind's icon tile, taken from the colour scheme so dynamic colour carries through. */
-@Composable
-private fun FileKind.tone(): Pair<Color, Color> {
-    val colors = MaterialTheme.colorScheme
-    return when (this) {
-        FileKind.FOLDER -> colors.primaryContainer to colors.onPrimaryContainer
-        FileKind.IMAGE, FileKind.VIDEO -> colors.tertiaryContainer to colors.onTertiaryContainer
-        FileKind.AUDIO, FileKind.ARCHIVE, FileKind.APK -> colors.secondaryContainer to colors.onSecondaryContainer
-        FileKind.PDF -> colors.errorContainer to colors.onErrorContainer
-        FileKind.TEXT, FileKind.OTHER -> colors.surfaceContainerHighest to colors.onSurfaceVariant
-    }
+/** The fixed colour of each kind's tile; null for folders, which take the accent. All carry white at 4.5:1 or more. */
+internal fun FileKind.tileColor(): Color? = when (this) {
+    FileKind.FOLDER -> null
+    FileKind.PDF -> Color(0xFFC62828)
+    FileKind.TEXT, FileKind.OTHER -> Color(0xFF455A64)
+    FileKind.IMAGE -> Color(0xFF2E7D32)
+    FileKind.VIDEO -> Color(0xFFAD1457)
+    FileKind.AUDIO -> Color(0xFF6A3FA0)
+    FileKind.ARCHIVE -> Color(0xFF8D5A00)
+    FileKind.APK -> Color(0xFF00796B)
 }
 
-/** The icon of a file kind on a rounded tonal tile; [modifier] sets the cell, [tileSize] the tile inside it. */
+/** The icon of a file kind on a coloured tile (a circle for folders); [modifier] sets the cell, [tileSize] the tile. */
 @Composable
 private fun IconTile(item: FileItem, selected: Boolean, modifier: Modifier, tileSize: Dp, iconSize: Dp) {
-    val (kindContainer, kindContent) = item.kind().tone()
-    val container by animateColorAsState(if (selected) MaterialTheme.colorScheme.primary else kindContainer, label = "tile")
-    val content by animateColorAsState(if (selected) MaterialTheme.colorScheme.onPrimary else kindContent, label = "tileIcon")
+    val kind = item.kind()
+    val fixed = kind.tileColor()
+    val colors = MaterialTheme.colorScheme
+    val container by animateColorAsState(
+        when {
+            selected -> colors.primary
+            else -> fixed ?: colors.primary
+        },
+        label = "tile",
+    )
+    val content = if (selected || fixed == null) colors.onPrimary else Color.White
     Box(modifier, contentAlignment = Alignment.Center) {
         Box(
-            modifier = Modifier.size(tileSize).clip(RoundedCornerShape(14.dp)).background(container),
+            modifier = Modifier
+                .size(tileSize)
+                .clip(if (selected || kind == FileKind.FOLDER) CircleShape else RoundedCornerShape(12.dp))
+                .background(container),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = if (selected) Icons.Filled.Check else item.kind().icon(),
+                imageVector = if (selected) Icons.Filled.Check else kind.icon(),
                 contentDescription = null,
                 modifier = Modifier.size(iconSize),
                 tint = content,

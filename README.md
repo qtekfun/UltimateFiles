@@ -45,6 +45,9 @@ sent to third parties.
   panel** in the button at the end. Side by side, each side has a drop-down listing all open panels to pick what it shows
   (choosing the one on the other side swaps them). Tabs and bar can sit at the top or the bottom (Settings).
 - **Header:** the name and free space of the volume, with the path as chips underneath.
+- **Lists and grid:** each kind of file has its own colored tile, rows show size (or, on local storage, how many items a
+  folder holds) and date, and a header shows the count and changes the order. While selecting, the actions are docked at
+  the bottom.
 - **Thumbnails:** photos and videos show a picture instead of an icon in the list and the grid, so you can tell what you
   are about to copy. Photos are read through the file backend at a reduced size, videos show a frame. On network accounts
   they are off by default (Settings), because each photo has to be downloaded.

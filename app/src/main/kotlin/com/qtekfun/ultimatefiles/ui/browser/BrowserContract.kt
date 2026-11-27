@@ -16,6 +16,8 @@ data class BrowserState(
     val breadcrumb: List<BreadcrumbSegment> = emptyList(),
     /** The volume the current folder is on, for its name and free space; null until read or when there is none. */
     val volume: StorageVolume? = null,
+    /** Entries inside each listed folder, by path, filled after the listing where it is cheap to know. */
+    val folderCounts: Map<String, Int> = emptyMap(),
     val items: List<FileItem> = emptyList(),
     val selectedPaths: Set<String> = emptySet(),
     val isLoading: Boolean = true,

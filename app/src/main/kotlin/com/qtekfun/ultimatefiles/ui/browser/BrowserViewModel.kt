@@ -118,6 +118,8 @@ class BrowserViewModel(
         }
     }
 
+    private var countJob: Job? = null
+
     /** The APK to open once the user comes back from allowing installs. */
     private var pendingInstall: BrowserEffect.OpenFile? = null
 
@@ -254,6 +256,7 @@ class BrowserViewModel(
                             errorMessage = null,
                         )
                     }
+                    countFolderEntries(path, files)
                     preferences.setLastDirectory(panel, path)
                     RemoteAccounts.idOf(path)?.let(health::clear)
                     // Read on every listing, so the free space follows what was just copied or deleted.
@@ -272,6 +275,19 @@ class BrowserViewModel(
                     }
                 },
             )
+        }
+    }
+
+    /** Apart from the listing, so that names show at once and a folder with many subfolders does not delay them. */
+    private fun countFolderEntries(path: String, files: List<FileItem>) {
+        countJob?.cancel()
+        countJob = viewModelScope.launch {
+            val counts = mutableMapOf<String, Int>()
+            for (folder in files.filter { it.isDirectory }.take(MAX_COUNTED_FOLDERS)) {
+                // A backend that cannot tell cheaply answers null at once.
+                repository.childCount(folder.path)?.let { counts[folder.path] = it }
+            }
+            _state.update { if (it.currentPath == path) it.copy(folderCounts = counts) else it }
         }
     }
 
@@ -442,6 +458,8 @@ class BrowserViewModel(
     companion object {
         /** Time the system needs to finish mounting or unmounting before the volumes are re-read. */
         private const val VOLUME_SETTLE_MILLIS = 500L
+
+        private const val MAX_COUNTED_FOLDERS = 500
 
         /** A failure that repeats within this time of the same one (the fallback reloads the folder) is not announced twice. */
         const val NOTICE_REPEAT_MILLIS = 3_000L
