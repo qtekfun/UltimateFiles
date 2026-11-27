@@ -49,4 +49,14 @@ interface FileSystemRepository {
         mimeType: String,
         overwrite: Boolean,
     ): Result<OutputStream>
+
+    /**
+     * Replaces the content of the existing file [item] with [bytes] so that a failure never leaves it truncated.
+     * Backends that cannot promise that fail without touching the file.
+     */
+    suspend fun replaceContent(item: FileItem, bytes: ByteArray): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Editing is not supported here"))
+
+    /** Previous content of [item] when a [replaceContent] was interrupted before finishing, else null. */
+    suspend fun interruptedSaveBackup(item: FileItem): ByteArray? = null
 }

@@ -72,6 +72,10 @@ class RoutingFileSystemRepository(
         overwrite: Boolean,
     ): Result<OutputStream> = backendFor(parentUriOrPath).openOutput(parentUriOrPath, name, mimeType, overwrite)
 
+    override suspend fun replaceContent(item: FileItem, bytes: ByteArray) = backendFor(item.path).replaceContent(item, bytes)
+
+    override suspend fun interruptedSaveBackup(item: FileItem) = backendFor(item.path).interruptedSaveBackup(item)
+
     private companion object {
         const val SAF_SCHEME = "content://"
     }

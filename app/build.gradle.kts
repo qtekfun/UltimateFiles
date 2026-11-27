@@ -125,6 +125,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.documentfile)
+    implementation(libs.androidx.media3.exoplayer) // audio and video player; no Google Play Services
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
