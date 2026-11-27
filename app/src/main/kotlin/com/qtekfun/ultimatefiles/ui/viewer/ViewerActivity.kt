@@ -76,7 +76,14 @@ class ViewerActivity : ComponentActivity() {
                     } else {
                         null
                     }
-                    ViewerScreen(name = name, uri = uri, kind = kind, pdf = pdf, onBack = { finish() })
+                    val media = if (kind == ViewerKind.MEDIA && uri != null) {
+                        viewModel<MediaViewModel>(
+                            factory = viewModelFactory { initializer { MediaViewModel(application, uri) } },
+                        )
+                    } else {
+                        null
+                    }
+                    ViewerScreen(name = name, pdf = pdf, media = media, onBack = { finish() })
                 }
             }
         }
@@ -93,7 +100,7 @@ class ViewerActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @androidx.compose.runtime.Composable
-private fun ViewerScreen(name: String, uri: Uri?, kind: ViewerKind?, pdf: PdfViewModel?, onBack: () -> Unit) {
+private fun ViewerScreen(name: String, pdf: PdfViewModel?, media: MediaViewModel?, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -108,9 +115,8 @@ private fun ViewerScreen(name: String, uri: Uri?, kind: ViewerKind?, pdf: PdfVie
     ) { padding ->
         val content = Modifier.padding(padding).fillMaxSize()
         when {
-            uri == null || kind == null -> Text(stringResource(R.string.viewer_unsupported), modifier = content)
             pdf != null -> PdfViewer(pdf, content)
-            kind == ViewerKind.MEDIA -> MediaViewer(uri, content)
+            media != null -> MediaViewer(media, content)
             else -> Text(stringResource(R.string.viewer_unsupported), modifier = content)
         }
     }

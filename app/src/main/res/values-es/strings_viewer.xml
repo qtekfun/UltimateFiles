@@ -43,4 +43,12 @@
     <string name="image_info_camera">Cámara</string>
     <string name="image_info_location">Ubicación</string>
     <string name="viewer_close">Cerrar</string>
+    <string name="player_play">Reproducir</string>
+    <string name="player_pause">Pausa</string>
+    <string name="player_back_10">Retroceder 10 segundos</string>
+    <string name="player_forward_10">Avanzar 10 segundos</string>
+    <string name="player_repeat">Repetir</string>
+    <string name="player_mute">Silenciar</string>
+    <string name="player_seek">Posición</string>
+    <string name="player_speed">%1$s×</string>
 </resources>
