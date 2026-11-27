@@ -41,9 +41,10 @@ sent to third parties.
   confirmation.
 - **New folder and file:** the folder-with-plus button in a panel's top bar creates a folder; **New file** is in the menu
   next to it.
-- **Panel bar:** each panel shows the name of its folder, and a drop-down lists all open panels with their folders to pick
-  what a side shows (choosing the one on the other side swaps them). The active panel is highlighted. The bar can sit at
-  the top or the bottom (Settings).
+- **Panel tabs and bar:** in portrait the open panels are tabs named after their folders, with **New panel** and **Close
+  panel** in the button at the end. Side by side, each side has a drop-down listing all open panels to pick what it shows
+  (choosing the one on the other side swaps them). Tabs and bar can sit at the top or the bottom (Settings).
+- **Header:** the name and free space of the volume, with the path as chips underneath.
 - **Thumbnails:** photos and videos show a picture instead of an icon in the list and the grid, so you can tell what you
   are about to copy. Photos are read through the file backend at a reduced size, videos show a frame. On network accounts
   they are off by default (Settings), because each photo has to be downloaded.
@@ -96,7 +97,7 @@ sent to third parties.
   created.
 
 ### Settings
-- Theme (system, light, dark, AMOLED) and dynamic colors, the position of the panel bar, thumbnails on network accounts and
+- Theme (system, light, dark, AMOLED), accent color (cyan, blue, purple, slate) or dynamic colors (off by default), the position of the panel bar, thumbnails on network accounts and
   copy verification.
 - **Accounts:** edit a network account from the three-dot menu of the drawer: the same form as when adding, filled in, with
   the password or key left empty to keep the one stored. The connection is checked first and the account is only changed if

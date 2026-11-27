@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.domain.repository
 
+import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
 import com.qtekfun.ultimatefiles.core.model.PanelId
 import com.qtekfun.ultimatefiles.core.model.SortOrder
@@ -25,6 +26,8 @@ interface UserPreferencesRepository {
     suspend fun setThemeMode(mode: ThemeMode)
 
     suspend fun setDynamicColor(enabled: Boolean)
+
+    suspend fun setAccentColor(accent: AccentColor)
 
     suspend fun setVerifyCopies(enabled: Boolean)
 

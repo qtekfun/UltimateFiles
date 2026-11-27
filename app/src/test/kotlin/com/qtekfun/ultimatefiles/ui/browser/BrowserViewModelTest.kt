@@ -1,6 +1,7 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
 import com.qtekfun.ultimatefiles.R
+import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.FileItem
 import com.qtekfun.ultimatefiles.core.model.OperationType
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
@@ -69,6 +70,7 @@ class BrowserViewModelTest {
         override suspend fun setPanelBarPosition(position: PanelBarPosition) = flow.update { it.copy(panelBarPosition = position) }
 
         override suspend fun setThemeMode(mode: ThemeMode) = flow.update { it.copy(themeMode = mode) }
+        override suspend fun setAccentColor(accent: AccentColor) = flow.update { it.copy(accentColor = accent) }
         override suspend fun setDynamicColor(enabled: Boolean) = flow.update { it.copy(dynamicColor = enabled) }
         override suspend fun setVerifyCopies(enabled: Boolean) = flow.update { it.copy(verifyCopies = enabled) }
         override suspend fun setThumbnailsOnNetwork(enabled: Boolean) = flow.update { it.copy(thumbnailsOnNetwork = enabled) }

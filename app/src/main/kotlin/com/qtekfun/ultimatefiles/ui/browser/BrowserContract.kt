@@ -7,12 +7,15 @@ import com.qtekfun.ultimatefiles.core.model.FileItem
 import com.qtekfun.ultimatefiles.core.model.HashState
 import com.qtekfun.ultimatefiles.core.model.SortField
 import com.qtekfun.ultimatefiles.core.model.SortOrder
+import com.qtekfun.ultimatefiles.core.model.StorageVolume
 import com.qtekfun.ultimatefiles.core.model.ViewMode
 
 data class BrowserState(
     val currentPath: String? = null,
     val parentPath: String? = null,
     val breadcrumb: List<BreadcrumbSegment> = emptyList(),
+    /** The volume the current folder is on, for its name and free space; null until read or when there is none. */
+    val volume: StorageVolume? = null,
     val items: List<FileItem> = emptyList(),
     val selectedPaths: Set<String> = emptySet(),
     val isLoading: Boolean = true,

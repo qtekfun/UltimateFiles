@@ -17,6 +17,9 @@ enum class PanelBarPosition { TOP, BOTTOM }
 /** [AMOLED] is the dark theme with pure black backgrounds. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK, AMOLED }
 
+/** The colour the app is dressed in, unless dynamic colours are on. */
+enum class AccentColor { CYAN, BLUE, PURPLE, SLATE }
+
 enum class SortField { NAME, SIZE, DATE }
 
 data class SortOrder(val field: SortField = SortField.NAME, val ascending: Boolean = true)
@@ -31,7 +34,8 @@ data class UserPreferences(
     val panelBarPosition: PanelBarPosition = PanelBarPosition.TOP,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     /** Material You colours from the wallpaper (Android 12+). */
-    val dynamicColor: Boolean = true,
+    val dynamicColor: Boolean = false,
+    val accentColor: AccentColor = AccentColor.CYAN,
     /** Read back and checksum every copied file (slower, safer for big or irreplaceable files). */
     val verifyCopies: Boolean = false,
     /** Draw thumbnails of photos on WebDAV, SFTP and SMB accounts too; it downloads each photo, so it is off by default. */

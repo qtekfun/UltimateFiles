@@ -327,4 +327,11 @@
     <string name="connection_edit_account">Editar cuenta</string>
     <string name="account_error_offline">Sin conexión de red.</string>
     <string name="account_error_no_response">El servidor no respondió. Comprueba la dirección y el puerto.</string>
+    <string name="browser_space_free">%1$s libres</string>
+    <string name="panel_menu">Paneles</string>
+    <string name="settings_accent">Color de acento</string>
+    <string name="accent_cyan">Cian</string>
+    <string name="accent_blue">Azul</string>
+    <string name="accent_purple">Morado</string>
+    <string name="accent_slate">Pizarra</string>
 </resources>

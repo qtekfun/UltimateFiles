@@ -58,6 +58,10 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.core.view.WindowCompat
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.graphics.luminance
+import android.app.Activity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -171,6 +175,16 @@ fun MainScreen() {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    // The browser's header is filled with the accent, so the status bar icons over it are light; elsewhere they follow the theme.
+    val view = LocalView.current
+    val darkSurface = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val overHeader = screen == AppScreen.BROWSER && drawerState.targetValue == DrawerValue.Closed
+    val darkIcons = !darkSurface && !overHeader
+    LaunchedEffect(darkIcons) {
+        val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkIcons
+    }
 
     // Closing a panel can be undone for a few seconds.
     val snackbar = remember { SnackbarHostState() }
@@ -355,6 +369,7 @@ fun MainScreen() {
                                     onDismissOutcome = settingsViewModel::dismissOutcome,
                                     onThemeMode = settingsViewModel::setThemeMode,
                                     onDynamicColor = settingsViewModel::setDynamicColor,
+                                    onAccentColor = settingsViewModel::setAccentColor,
                                     onVerifyCopies = settingsViewModel::setVerifyCopies,
                                     onThumbnailsOnNetwork = settingsViewModel::setThumbnailsOnNetwork,
                                     onPanelBarPosition = settingsViewModel::setPanelBarPosition,

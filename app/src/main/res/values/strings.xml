@@ -327,4 +327,11 @@
     <string name="connection_edit_account">Edit account</string>
     <string name="account_error_offline">No network connection.</string>
     <string name="account_error_no_response">The server did not answer. Check the address and the port.</string>
+    <string name="browser_space_free">%1$s free</string>
+    <string name="panel_menu">Panels</string>
+    <string name="settings_accent">Accent color</string>
+    <string name="accent_cyan">Cyan</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_purple">Purple</string>
+    <string name="accent_slate">Slate</string>
 </resources>

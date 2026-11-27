@@ -197,6 +197,8 @@ fun BrowserScreen(
             } else {
                 BrowserTopBar(
                     segments = state.breadcrumb,
+                    volumeName = state.volume?.label,
+                    freeBytes = state.volume?.freeBytes,
                     sortOrder = state.sortOrder,
                     viewMode = state.viewMode,
                     onToggleViewMode = { onEvent(BrowserEvent.ToggleViewMode) },

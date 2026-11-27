@@ -256,6 +256,9 @@ class BrowserViewModel(
                     }
                     preferences.setLastDirectory(panel, path)
                     RemoteAccounts.idOf(path)?.let(health::clear)
+                    // Read on every listing, so the free space follows what was just copied or deleted.
+                    val volume = repository.volumes().firstOrNull { it.rootPath == breadcrumb.firstOrNull()?.path }
+                    _state.update { it.copy(volume = volume) }
                 },
                 onFailure = { error ->
                     if (error is CancellationException) throw error

@@ -14,7 +14,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -26,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.qtekfun.ultimatefiles.R
 import com.qtekfun.ultimatefiles.ui.components.PanelTopBar
+import com.qtekfun.ultimatefiles.ui.theme.SelectionBarContainer
+import com.qtekfun.ultimatefiles.ui.theme.SelectionBarContent
 
 /**
  * Contextual action bar that replaces the top bar while items are selected: counter, direct
@@ -52,10 +53,10 @@ fun SelectionActionBar(
     PanelTopBar(
         modifier = modifier,
         windowInsets = windowInsets,
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        titleColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        navigationIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        actionIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        containerColor = SelectionBarContainer,
+        titleColor = SelectionBarContent,
+        navigationIconColor = SelectionBarContent,
+        actionIconColor = SelectionBarContent,
         title = { Text(stringResource(R.string.selection_count, selectedCount)) },
         navigationIcon = {
             IconButton(onClick = onClearSelection) {
