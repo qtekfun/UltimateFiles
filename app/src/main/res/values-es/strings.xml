@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">UltimateFiles</string>
     <string name="panel_tab_format">Panel %1$d</string>
-    <string name="panel_add">Añadir panel</string>
     <string name="panel_close">Cerrar panel</string>
     <string name="storage_internal">Almacenamiento interno</string>
     <string name="transfer_channel_name">Transferencias de archivos</string>

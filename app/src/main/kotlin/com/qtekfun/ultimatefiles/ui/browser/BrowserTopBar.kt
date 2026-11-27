@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -41,7 +42,7 @@ import com.qtekfun.ultimatefiles.core.model.ViewMode
 import com.qtekfun.ultimatefiles.ui.components.BreadcrumbBar
 import com.qtekfun.ultimatefiles.ui.components.labelRes
 
-/** Top bar at rest: drawer, interactive breadcrumb, search and the directory overflow menu. */
+/** Top bar at rest: drawer, interactive breadcrumb, new folder, search and the directory overflow menu. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowserTopBar(
@@ -101,6 +102,9 @@ fun BrowserTopBar(
         },
         actions = {
             if (searchQuery == null) {
+                IconButton(onClick = onNewFolder) {
+                    Icon(Icons.Filled.CreateNewFolder, contentDescription = stringResource(R.string.action_new_folder))
+                }
                 IconButton(onClick = onSearchClick) {
                     Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
                 }
@@ -110,10 +114,6 @@ fun BrowserTopBar(
                     Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_new_folder)) },
-                        onClick = { menuOpen = false; onNewFolder() },
-                    )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.action_new_file)) },
                         onClick = { menuOpen = false; onNewFile() },

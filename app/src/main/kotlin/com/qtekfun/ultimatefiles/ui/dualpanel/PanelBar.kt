@@ -12,16 +12,15 @@ import com.qtekfun.ultimatefiles.ui.components.dockBottomInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.VerticalSplit
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -141,7 +140,7 @@ fun PanelBar(
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.panel_new)) },
-                            leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Filled.VerticalSplit, contentDescription = null) },
                             onClick = {
                                 expanded = false
                                 onAdd()
@@ -157,9 +156,6 @@ fun PanelBar(
                             },
                         )
                     }
-                }
-                IconButton(onClick = onAdd) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.panel_add))
                 }
             }
             if (isActive) {

@@ -35,10 +35,12 @@ sent to third parties.
 ## Features
 
 ### Browsing
-- **Panels:** open as many as you need with **+** (a new panel starts in the folder of the active one) and close them from
-  the panel menu, with undo. They and their folders are remembered. In portrait you swipe from one to the next; in
+- **Panels:** open as many as you need with **New panel** in the panel menu (a new panel starts in the folder of the
+  active one) and close them from the same menu, with undo. They and their folders are remembered. In portrait you swipe from one to the next; in
   landscape and on wide screens two fixed panels show side by side, with drag and drop between them and a "Copy or move?"
   confirmation.
+- **New folder and file:** the folder-with-plus button in a panel's top bar creates a folder; **New file** is in the menu
+  next to it.
 - **Panel bar:** each panel shows the name of its folder, and a drop-down lists all open panels with their folders to pick
   what a side shows (choosing the one on the other side swaps them). The active panel is highlighted. The bar can sit at
   the top or the bottom (Settings).
