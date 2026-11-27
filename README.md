@@ -59,7 +59,8 @@ sent to third parties.
   **Select** entry to start selecting more, and a docked paste bar at the bottom.
 - **Properties** with permissions and MD5/SHA-256 hashes.
 - **Built-in viewers** for images (with zoom), text, PDF, audio and video; "Open with…" hands off to other apps.
-- **Open APKs:** asks once for the "install unknown apps" permission, then hands over to the system installer.
+- **Open APKs:** the first time, explains the "install unknown apps" permission and takes you to it; back with it granted,
+  the system installer opens. Settings shows whether it is granted. APKs are recognised by type or `.apk` extension.
 
 ### Copying and moving
 - **Background transfers** run in a foreground service with a notification showing progress, speed and time left. It is

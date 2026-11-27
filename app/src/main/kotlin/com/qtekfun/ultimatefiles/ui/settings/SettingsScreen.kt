@@ -77,6 +77,9 @@ import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
 import com.qtekfun.ultimatefiles.core.model.ThemeMode
 import com.qtekfun.ultimatefiles.core.model.UserPreferences
 import com.qtekfun.ultimatefiles.ui.components.CheckNotice
+import com.qtekfun.ultimatefiles.ui.components.openInstallSourceSettings
+import com.qtekfun.ultimatefiles.ui.components.canInstallApps
+import com.qtekfun.ultimatefiles.ui.components.PermissionRow
 import com.qtekfun.ultimatefiles.ui.components.aggressiveBatteryVendor
 import com.qtekfun.ultimatefiles.ui.components.areNotificationsAllowed
 import com.qtekfun.ultimatefiles.ui.components.isIgnoringBatteryOptimizations
@@ -373,6 +376,7 @@ private fun ReliabilitySection() {
     val notifications by rememberCheck { areNotificationsAllowed(context) }
     val channel by rememberCheck { isProgressChannelUsable(context) }
     val battery by rememberCheck { isIgnoringBatteryOptimizations(context) }
+    val installApps by rememberCheck { canInstallApps(context) }
     val vendor = remember { aggressiveBatteryVendor() }
 
     SettingsGroup(R.string.settings_reliability, Icons.Filled.HealthAndSafety) {
@@ -399,5 +403,6 @@ private fun ReliabilitySection() {
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
+    PermissionRow(R.string.check_install_apps, installApps) { openInstallSourceSettings(context) }
     }
 }

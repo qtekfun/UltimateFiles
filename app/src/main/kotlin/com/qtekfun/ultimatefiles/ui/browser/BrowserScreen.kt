@@ -5,6 +5,11 @@ import com.qtekfun.ultimatefiles.domain.usecase.ArchiveFormat
 import com.qtekfun.ultimatefiles.domain.usecase.SizeAnalyzer
 import com.qtekfun.ultimatefiles.domain.usecase.ArchivePaths
 import androidx.activity.compose.BackHandler
+import com.qtekfun.ultimatefiles.ui.components.InstallPermissionDialog
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -87,14 +92,18 @@ fun BrowserScreen(
     val intents = remember { KoinPlatform.getKoin().get<IntentFactory>() }
     val snackbar = remember { SnackbarHostState() }
     val onEvent = viewModel::onEvent
+    val scope = rememberCoroutineScope()
+    val installSettings = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        // The settings page reports no result: what counts is whether the permission is there now.
+        onEvent(BrowserEvent.InstallPermissionResult(intents.canInstallPackages()))
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is BrowserEffect.OpenFile -> try {
                     if (intents.needsInstallPermission(effect.item)) {
-                        context.startActivity(intents.installPermissionSettings())
-                        snackbar.showSnackbar(resources.getString(R.string.install_permission_needed))
+                        onEvent(BrowserEvent.RequestInstallPermission(effect.item, effect.chooser))
                     } else {
                         context.startActivity(intents.view(effect.item, effect.chooser))
                     }
@@ -290,6 +299,18 @@ fun BrowserScreen(
         is BrowserDialog.ConfirmDelete -> ConfirmDeleteDialog(
             items = dialog.items,
             onConfirm = { onEvent(BrowserEvent.ConfirmDelete) },
+            onDismiss = { onEvent(BrowserEvent.DismissDialog) },
+        )
+        is BrowserDialog.InstallPermission -> InstallPermissionDialog(
+            fileName = dialog.item.name,
+            onConfirm = {
+                onEvent(BrowserEvent.ConfirmInstallPermission)
+                try {
+                    installSettings.launch(intents.installPermissionSettings())
+                } catch (e: ActivityNotFoundException) {
+                    scope.launch { snackbar.showSnackbar(resources.getString(R.string.error_no_app)) }
+                }
+            },
             onDismiss = { onEvent(BrowserEvent.DismissDialog) },
         )
         is BrowserDialog.Properties -> PropertiesBottomSheet(

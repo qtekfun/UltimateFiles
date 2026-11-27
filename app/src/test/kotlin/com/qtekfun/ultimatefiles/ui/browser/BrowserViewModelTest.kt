@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import com.qtekfun.ultimatefiles.R
 import com.qtekfun.ultimatefiles.core.model.FileItem
 import com.qtekfun.ultimatefiles.core.model.OperationType
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
@@ -238,6 +239,30 @@ class BrowserViewModelTest {
         val state = viewModel.state.first { s -> s.items.any { it.name == "created" } }
         assertNull(state.dialog)
         assertTrue(tmp.root.resolve("created").isDirectory)
+    }
+
+    @Test
+    fun `granting the install permission opens the waiting file`() = runTest {
+        val file = loaded().items.first { it.name == "b.txt" }
+
+        viewModel.onEvent(BrowserEvent.RequestInstallPermission(file, chooser = true))
+        assertEquals(BrowserDialog.InstallPermission(file, true), viewModel.state.value.dialog)
+        viewModel.onEvent(BrowserEvent.ConfirmInstallPermission)
+        assertNull(viewModel.state.value.dialog)
+        viewModel.onEvent(BrowserEvent.InstallPermissionResult(granted = true))
+
+        assertEquals(BrowserEffect.OpenFile(file, true), viewModel.effects.first())
+    }
+
+    @Test
+    fun `coming back without the install permission only says so`() = runTest {
+        val file = loaded().items.first { it.name == "b.txt" }
+
+        viewModel.onEvent(BrowserEvent.RequestInstallPermission(file, chooser = false))
+        viewModel.onEvent(BrowserEvent.ConfirmInstallPermission)
+        viewModel.onEvent(BrowserEvent.InstallPermissionResult(granted = false))
+
+        assertEquals(BrowserEffect.Message(R.string.install_permission_denied), viewModel.effects.first())
     }
 
     @Test

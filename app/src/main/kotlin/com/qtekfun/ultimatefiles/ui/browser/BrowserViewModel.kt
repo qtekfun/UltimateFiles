@@ -118,6 +118,9 @@ class BrowserViewModel(
         }
     }
 
+    /** The APK to open once the user comes back from allowing installs. */
+    private var pendingInstall: BrowserEffect.OpenFile? = null
+
     fun onEvent(event: BrowserEvent) {
         when (event) {
             is BrowserEvent.Navigate -> load(event.path)
@@ -166,6 +169,9 @@ class BrowserViewModel(
             BrowserEvent.ConfirmDelete -> confirmDelete()
             BrowserEvent.ComputeHash -> computeHash()
             BrowserEvent.DismissDialog -> dismissDialog()
+            is BrowserEvent.RequestInstallPermission -> showDialog(BrowserDialog.InstallPermission(event.item, event.chooser))
+            BrowserEvent.ConfirmInstallPermission -> confirmInstallPermission()
+            is BrowserEvent.InstallPermissionResult -> onInstallPermissionResult(event.granted)
             is BrowserEvent.StartDrag -> startDrag(event.item)
             is BrowserEvent.DropItems -> dragDrop.requestDrop(event.targetPath)
         }
@@ -321,6 +327,19 @@ class BrowserViewModel(
                 }
             }
         }
+    }
+
+    private fun confirmInstallPermission() {
+        val dialog = _state.value.dialog as? BrowserDialog.InstallPermission ?: return
+        pendingInstall = BrowserEffect.OpenFile(dialog.item, dialog.chooser)
+        _state.update { it.copy(dialog = null) }
+    }
+
+    /** Carries on with the APK that was waiting, so the user does not have to tap it again. */
+    private fun onInstallPermissionResult(granted: Boolean) {
+        val pending = pendingInstall ?: return
+        pendingInstall = null
+        emit(if (granted) pending else BrowserEffect.Message(R.string.install_permission_denied))
     }
 
     private fun dismissDialog() {

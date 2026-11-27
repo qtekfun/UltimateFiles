@@ -19,7 +19,7 @@ class IntentFactory(private val context: Context) {
 
     fun view(item: FileItem, chooser: Boolean): Intent {
         val intent = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uriFor(item), item.mimeType ?: MimeTypes.fromName(item.name) ?: "*/*")
+            .setDataAndType(uriFor(item), viewType(item))
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         return if (chooser) Intent.createChooser(intent, item.name) else intent
     }
@@ -49,7 +49,9 @@ class IntentFactory(private val context: Context) {
 
     /** Opening an APK needs the user to allow UltimateFiles as an install source (Android 8+). */
     fun needsInstallPermission(item: FileItem): Boolean =
-        (item.mimeType ?: MimeTypes.fromName(item.name)) == APK_MIME && !context.packageManager.canRequestPackageInstalls()
+        MimeTypes.isApk(item.name, item.mimeType) && !canInstallPackages()
+
+    fun canInstallPackages(): Boolean = context.packageManager.canRequestPackageInstalls()
 
     /** The system page where the user allows installing apps from UltimateFiles. */
     fun installPermissionSettings(): Intent =
@@ -58,14 +60,18 @@ class IntentFactory(private val context: Context) {
     /** There is no public API to unmount a volume; the system storage screen is where it is done. */
     fun ejectSettings(): Intent = Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)
 
+    /** An APK reported with a generic type must still be handed over as one, or the installer will not take it. */
+    private fun viewType(item: FileItem): String =
+        if (MimeTypes.isApk(item.name, item.mimeType)) {
+            MimeTypes.APK
+        } else {
+            item.mimeType ?: MimeTypes.fromName(item.name) ?: "*/*"
+        }
+
     private fun uriFor(item: FileItem): Uri =
         if (item.path.startsWith("content://")) {
             Uri.parse(item.path)
         } else {
             FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(item.path))
         }
-
-    private companion object {
-        const val APK_MIME = "application/vnd.android.package-archive"
-    }
 }

@@ -87,7 +87,15 @@
     <string name="drop_copy">Copy</string>
     <string name="drop_move">Move</string>
     <string name="transfer_speed">%1$s/s</string>
-    <string name="install_permission_needed">Allow UltimateFiles to install apps in this screen, then open the APK again.</string>
+    <string name="install_permission_title">Allow installing apps</string>
+    <string name="install_permission_needed">To install %1$s, Android has to allow UltimateFiles to install apps. Turn on the switch in the next screen and come back.</string>
+    <string name="install_permission_open_settings">Open settings</string>
+    <string name="install_permission_denied">Installing apps is not allowed, so the APK was not opened.</string>
+    <string name="check_install_apps">Install apps</string>
+    <string name="permission_granted">Granted</string>
+    <string name="permission_not_granted">Not granted</string>
+    <string name="permission_change">Change</string>
+    <string name="permission_allow">Allow</string>
     <string name="incoming_failed">Could not open the archive: %1$s</string>
     <string name="error_archive_open">Copy the file out of the archive to open it.</string>
     <string name="error_open_failed">Could not open the file: %1$s</string>

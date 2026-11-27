@@ -37,6 +37,9 @@ sealed interface BrowserDialog {
     data class ConfirmDelete(val items: List<FileItem>) : BrowserDialog
     data class Compress(val items: List<FileItem>) : BrowserDialog
     data class Properties(val item: FileItem, val hash: HashState = HashState.Idle) : BrowserDialog
+
+    /** Explains why installing needs a system permission, before leaving for the settings to grant it. */
+    data class InstallPermission(val item: FileItem, val chooser: Boolean) : BrowserDialog
 }
 
 /** Everything the screen can ask the view model to do. */
@@ -69,6 +72,13 @@ sealed interface BrowserEvent {
     data object ConfirmDelete : BrowserEvent
     data object ComputeHash : BrowserEvent
     data object DismissDialog : BrowserEvent
+
+    /** [item] cannot be opened until the user allows installing apps from here. */
+    data class RequestInstallPermission(val item: FileItem, val chooser: Boolean) : BrowserEvent
+    data object ConfirmInstallPermission : BrowserEvent
+
+    /** The user came back from the system settings. */
+    data class InstallPermissionResult(val granted: Boolean) : BrowserEvent
     data class StartDrag(val item: FileItem) : BrowserEvent
     data class DropItems(val targetPath: String) : BrowserEvent
 
