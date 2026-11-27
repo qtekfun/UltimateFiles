@@ -29,7 +29,11 @@ val signingKeystore: String? = System.getenv("UF_KEYSTORE_FILE")
 
 android {
     namespace = "com.qtekfun.ultimatefiles"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 1
+        }
+    }
 
     defaultConfig {
         applicationId = "com.qtekfun.ultimatefiles"
