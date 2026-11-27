@@ -1,5 +1,8 @@
 package com.qtekfun.ultimatefiles.di
 
+import com.qtekfun.ultimatefiles.data.system.labelRes
+import com.qtekfun.ultimatefiles.data.repository.MediaStoreCategorySource
+import com.qtekfun.ultimatefiles.data.repository.CategoryFileSystemRepository
 import android.os.Environment
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -112,6 +115,13 @@ val appModule = module {
         val scope = this
         ArchiveFileSystemRepository(source = { scope.get<FileSystemRepository>() }, cacheDir = File(androidContext().cacheDir, "archives"))
     }
+    single {
+        val context = androidContext()
+        CategoryFileSystemRepository(
+            source = MediaStoreCategorySource(context.contentResolver),
+            label = { context.getString(it.labelRes()) },
+        )
+    }
     single<FileSystemRepository> {
         RoutingFileSystemRepository(
             local = get<LocalFileSystemRepository>(),
@@ -120,6 +130,7 @@ val appModule = module {
             sftp = get<SftpFileSystemRepository>(),
             archive = get<ArchiveFileSystemRepository>(),
             smb = get<SmbFileSystemRepository>(),
+            categories = get<CategoryFileSystemRepository>(),
         )
     }
 

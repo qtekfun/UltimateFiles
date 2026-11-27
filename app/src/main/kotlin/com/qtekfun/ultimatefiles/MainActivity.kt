@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.ThemeMode
 import com.qtekfun.ultimatefiles.ui.main.MainScreen
 import com.qtekfun.ultimatefiles.ui.main.StoragePermissionGate
@@ -71,7 +72,11 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
 
-            UltimateFilesTheme(themeMode = themeMode, dynamicColor = preferences?.dynamicColor ?: true) {
+            UltimateFilesTheme(
+                themeMode = themeMode,
+                dynamicColor = preferences?.dynamicColor ?: false,
+                accent = preferences?.accentColor ?: AccentColor.CYAN,
+            ) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     // Wait for the stored theme so the app does not flash the default one at start.
                     if (preferences != null) StoragePermissionGate { MainScreen() }

@@ -52,6 +52,8 @@ class LocalFileSystemRepository(
         toItem(file).copy(permissions = posixPermissions(file))
     }
 
+    override suspend fun childCount(uriOrPath: String): Int? = withContext(Dispatchers.IO) { File(uriOrPath).list()?.size }
+
     override suspend fun parentOf(uriOrPath: String): String? {
         if (uriOrPath == root.path || extraVolumes().any { it.rootPath == uriOrPath }) return null
         return File(uriOrPath).parent

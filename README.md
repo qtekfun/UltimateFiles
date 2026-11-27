@@ -35,13 +35,19 @@ sent to third parties.
 ## Features
 
 ### Browsing
-- **Panels:** open as many as you need with **+** (a new panel starts in the folder of the active one) and close them from
-  the panel menu, with undo. They and their folders are remembered. In portrait you swipe from one to the next; in
+- **Panels:** open as many as you need with **New panel** in the panel menu (a new panel starts in the folder of the
+  active one) and close them from the same menu, with undo. They and their folders are remembered. In portrait you swipe from one to the next; in
   landscape and on wide screens two fixed panels show side by side, with drag and drop between them and a "Copy or move?"
   confirmation.
-- **Panel bar:** each panel shows the name of its folder, and a drop-down lists all open panels with their folders to pick
-  what a side shows (choosing the one on the other side swaps them). The active panel is highlighted. The bar can sit at
-  the top or the bottom (Settings).
+- **New folder and file:** the folder-with-plus button in a panel's top bar creates a folder; **New file** is in the menu
+  next to it.
+- **Panel tabs and bar:** in portrait the open panels are tabs named after their folders, with **New panel** and **Close
+  panel** in the button at the end. Side by side, each side has a drop-down listing all open panels to pick what it shows
+  (choosing the one on the other side swaps them). Tabs and bar can sit at the top or the bottom (Settings).
+- **Header:** the name and free space of the volume, with the path as chips underneath.
+- **Lists and grid:** each kind of file has its own colored tile, rows show size (or, on local storage, how many items a
+  folder holds) and date, and a header shows the count and changes the order. While selecting, the actions are docked at
+  the bottom.
 - **Thumbnails:** photos and videos show a picture instead of an icon in the list and the grid, so you can tell what you
   are about to copy. Photos are read through the file backend at a reduced size, videos show a frame. On network accounts
   they are off by default (Settings), because each photo has to be downloaded.
@@ -49,6 +55,9 @@ sent to third parties.
   space went, TreeSize style: the entries from the biggest down, each with its size, its share of the folder and a bar, and
   a tap goes down into a folder. A long press shows the entry in a panel, selected, so copy, move and delete apply to it.
   It works on this device (internal storage, USB, SD, folders added through the system picker), not on servers.
+- **Categories:** images, video, audio, documents, APKs and recent files from the drawer, gathered from the system's media
+  index. They are browsed like a folder, but nothing can be created or pasted in them.
+- **Favorites:** add a file or folder from its menu and reach it from the drawer.
 - **Navigation:** breadcrumb path bar, search by name, sorting, list or grid view, and a side drawer with volumes (internal
   storage, USB drives and SD cards, with their free space) and shortcuts. Drives that Android has mounted are used
   directly from Android 11; before that, or for a drive Android does not mount, add the folder with **Add USB / SD
@@ -57,7 +66,8 @@ sent to third parties.
   **Select** entry to start selecting more, and a docked paste bar at the bottom.
 - **Properties** with permissions and MD5/SHA-256 hashes.
 - **Built-in viewers** for images (with zoom), text, PDF, audio and video; "Open with…" hands off to other apps.
-- **Open APKs:** asks once for the "install unknown apps" permission, then hands over to the system installer.
+- **Open APKs:** the first time, explains the "install unknown apps" permission and takes you to it; back with it granted,
+  the system installer opens. Settings shows whether it is granted. APKs are recognised by type or `.apk` extension.
 
 ### Copying and moving
 - **Background transfers** run in a foreground service with a notification showing progress, speed and time left. It is
@@ -93,7 +103,7 @@ sent to third parties.
   created.
 
 ### Settings
-- Theme (system, light, dark, AMOLED) and dynamic colors, the position of the panel bar, thumbnails on network accounts and
+- Theme (system, light, dark, AMOLED), accent color (cyan, blue, purple, slate) or dynamic colors (off by default), the position of the panel bar, thumbnails on network accounts and
   copy verification.
 - **Accounts:** edit a network account from the three-dot menu of the drawer: the same form as when adding, filled in, with
   the password or key left empty to keep the one stored. The connection is checked first and the account is only changed if

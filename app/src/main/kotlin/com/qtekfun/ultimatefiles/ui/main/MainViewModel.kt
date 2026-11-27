@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.ui.main
 
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
@@ -64,6 +65,7 @@ data class MainState(
     val endPanel: PanelId = PanelId.RIGHT,
     val activePanel: PanelId = PanelId.LEFT,
     val panelBarPosition: PanelBarPosition = PanelBarPosition.TOP,
+    val favorites: List<Favorite> = emptyList(),
 )
 
 enum class PanelSlot { START, END }
@@ -139,6 +141,11 @@ class MainViewModel(
         viewModelScope.launch {
             preferences.preferences.map { it.panelBarPosition }.distinctUntilChanged().collect { position ->
                 _state.update { it.copy(panelBarPosition = position) }
+            }
+        }
+        viewModelScope.launch {
+            preferences.preferences.map { it.favorites }.distinctUntilChanged().collect { favorites ->
+                _state.update { it.copy(favorites = favorites) }
             }
         }
         viewModelScope.launch(Dispatchers.IO) { coordinator.loadInterrupted() }
@@ -222,6 +229,10 @@ class MainViewModel(
 
     /** Opens a panel again where [closed] was, in the folder it had. */
     fun restorePanel(closed: ClosedPanel) = insertPanel(closed.index, closed.path)
+
+    fun removeFavorite(favorite: Favorite) {
+        viewModelScope.launch { preferences.setFavorite(favorite, false) }
+    }
 
     /** Re-reads the volumes, e.g. after a USB drive was plugged in or a folder was granted. */
     fun refreshVolumes() {

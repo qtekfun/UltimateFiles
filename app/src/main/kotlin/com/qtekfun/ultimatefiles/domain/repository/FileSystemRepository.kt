@@ -19,6 +19,12 @@ interface FileSystemRepository {
 
     suspend fun stat(uriOrPath: String): Result<FileItem>
 
+    /**
+     * How many entries the folder holds, or null when finding out is not cheap (anything over the network, the system
+     * picker, archives). Only a backend that can answer from local storage overrides this.
+     */
+    suspend fun childCount(uriOrPath: String): Int? = null
+
     /** Parent directory, or null when [uriOrPath] is a volume root. */
     suspend fun parentOf(uriOrPath: String): String?
 

@@ -3,6 +3,7 @@ package com.qtekfun.ultimatefiles.ui.settings
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
 import com.qtekfun.ultimatefiles.core.model.ThemeMode
 import com.qtekfun.ultimatefiles.core.model.UserPreferences
@@ -64,6 +65,10 @@ class SettingsViewModel(
 
     fun setThumbnailsOnNetwork(enabled: Boolean) {
         viewModelScope.launch { preferencesRepository.setThumbnailsOnNetwork(enabled) }
+    }
+
+    fun setAccentColor(accent: AccentColor) {
+        viewModelScope.launch { preferencesRepository.setAccentColor(accent) }
     }
 
     fun setDynamicColor(enabled: Boolean) {
