@@ -55,7 +55,7 @@ class ViewerActivity : ComponentActivity() {
             ) {
                 if (kind == ViewerKind.TEXT && path != null) {
                     val editor = viewModel<TextEditorViewModel>(
-                        factory = viewModelFactory { initializer { TextEditorViewModel(koin.get(), path) } },
+                        factory = viewModelFactory { initializer { TextEditorViewModel(koin.get(), path, koin.get()) } },
                     )
                     TextEditorScreen(name = name, viewModel = editor, onClose = { finish() })
                 } else {

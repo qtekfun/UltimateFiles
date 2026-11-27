@@ -72,6 +72,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.qtekfun.ultimatefiles.R
 import com.qtekfun.ultimatefiles.domain.usecase.TextReadOnly
@@ -92,6 +94,7 @@ internal fun TextEditorScreen(name: String, viewModel: TextEditorViewModel, onCl
     val matches = remember(find?.query, field.text.toString()) { TextSearch.matches(field.text, find?.query.orEmpty()) }
     val currentMatch = find?.let { if (matches.isEmpty()) -1 else it.current.mod(matches.size) } ?: -1
 
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { viewModel.onEvent(EditorEvent.Persist) }
     BackHandler {
         if (find != null) find = null else viewModel.onEvent(EditorEvent.Exit)
     }
@@ -159,6 +162,7 @@ internal fun TextEditorScreen(name: String, viewModel: TextEditorViewModel, onCl
                 state.readOnly == TextReadOnly.BINARY -> R.string.editor_read_only_binary
                 state.readOnly == TextReadOnly.NOT_WRITABLE -> R.string.editor_read_only_permission
                 state.recovered -> R.string.editor_recovered
+                state.restoredDraft -> R.string.editor_restored_draft
                 else -> null
             }
             if (notice != null) {

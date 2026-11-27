@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.ui.text.TextRange
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qtekfun.ultimatefiles.domain.repository.DraftStore
 import com.qtekfun.ultimatefiles.domain.repository.FileSystemRepository
 import com.qtekfun.ultimatefiles.domain.usecase.EditHistory
 import com.qtekfun.ultimatefiles.domain.usecase.TextDocument
@@ -12,10 +13,15 @@ import com.qtekfun.ultimatefiles.domain.usecase.TextReadOnly
 import com.qtekfun.ultimatefiles.domain.usecase.TextSearch
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 
@@ -29,6 +35,8 @@ data class EditorState(
     val canRedo: Boolean = false,
     val saving: Boolean = false,
     val recovered: Boolean = false,
+    /** Unsaved text from an editor that was destroyed is on screen. */
+    val restoredDraft: Boolean = false,
     val wordWrap: Boolean = true,
     val lineNumbers: Boolean = true,
     val confirmExit: Boolean = false,
@@ -52,11 +60,16 @@ sealed interface EditorEvent {
     data object DiscardAndExit : EditorEvent
     data object CancelExit : EditorEvent
     data object ErrorShown : EditorEvent
+    /** The screen is no longer in front and may be destroyed without further notice. */
+    data object Persist : EditorEvent
 }
+
+private const val DRAFT_DELAY_MILLIS = 1500L
 
 class TextEditorViewModel(
     private val repository: FileSystemRepository,
     private val path: String,
+    private val drafts: DraftStore,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
     val field = TextFieldState()
@@ -67,6 +80,8 @@ class TextEditorViewModel(
     private var document: TextDocument? = null
     private var savedText = ""
     private var history = EditHistory("")
+    private val draftLock = Mutex()
+    private var draftJob: Job? = null
 
     init {
         viewModelScope.launch { load() }
@@ -84,9 +99,21 @@ class TextEditorViewModel(
             document = shown
             savedText = onDisk.text
             history = EditHistory(shown.text)
-            field.setTextAndPlaceCursorAtEnd(shown.text)
+            val draft = if (shown.readOnly == null) drafts.load(path)?.takeIf { it != shown.text } else null
+            // Recorded as an edit, so undo goes back to what is on disk.
+            if (draft != null) history.record(draft)
+            field.setTextAndPlaceCursorAtEnd(draft ?: shown.text)
             field.edit { selection = TextRange.Zero }
-            _state.update { it.copy(loading = false, readOnly = shown.readOnly, recovered = recovered, dirty = recovered) }
+            _state.update {
+                it.copy(
+                    loading = false,
+                    readOnly = shown.readOnly,
+                    recovered = recovered,
+                    restoredDraft = draft != null,
+                    dirty = recovered || draft != null,
+                    canUndo = history.canUndo,
+                )
+            }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -108,7 +135,10 @@ class TextEditorViewModel(
 
     fun onEvent(event: EditorEvent) {
         when (event) {
-            EditorEvent.TextChanged -> record()
+            EditorEvent.TextChanged -> {
+                record()
+                persistSoon()
+            }
             EditorEvent.Undo -> {
                 record()
                 history.undo()?.let(::apply)
@@ -140,9 +170,35 @@ class TextEditorViewModel(
                 _state.update { it.copy(confirmExit = false) }
                 save(thenClose = true)
             }
-            EditorEvent.DiscardAndExit -> _state.update { it.copy(confirmExit = false, closed = true) }
+            EditorEvent.DiscardAndExit -> {
+                _state.update { it.copy(confirmExit = false, closed = true) }
+                persist()
+            }
+            EditorEvent.Persist -> persist()
             EditorEvent.CancelExit -> _state.update { it.copy(confirmExit = false) }
             EditorEvent.ErrorShown -> _state.update { it.copy(error = null) }
+        }
+    }
+
+    /** Typing is also kept while the editor stays in front, in case the process dies there. */
+    private fun persistSoon() {
+        draftJob?.cancel()
+        if (!_state.value.dirty) return
+        draftJob = viewModelScope.launch {
+            delay(DRAFT_DELAY_MILLIS)
+            persist()
+        }
+    }
+
+    /** Writes the draft while there are unsaved changes and removes it once they are saved or discarded. */
+    private fun persist() {
+        if (!editable()) return
+        // Not cancellable: it must finish even if the editor is being destroyed.
+        viewModelScope.launch(NonCancellable) {
+            draftLock.withLock {
+                val current = _state.value
+                if (current.dirty && !current.closed) drafts.save(path, field.text.toString()) else drafts.delete(path)
+            }
         }
     }
 
@@ -185,8 +241,9 @@ class TextEditorViewModel(
             val result = repository.stat(path).fold({ repository.replaceContent(it, bytes) }, { Result.failure(it) })
             if (result.isSuccess) {
                 savedText = text
-                _state.update { it.copy(saving = false, recovered = false, closed = thenClose) }
+                _state.update { it.copy(saving = false, recovered = false, restoredDraft = false, closed = thenClose) }
                 refresh()
+                persist()
             } else {
                 _state.update { it.copy(saving = false, error = EditorError.SAVE) }
             }

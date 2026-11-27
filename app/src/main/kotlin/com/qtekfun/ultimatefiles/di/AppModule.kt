@@ -11,22 +11,20 @@ import com.qtekfun.ultimatefiles.core.model.PanelId
 import com.qtekfun.ultimatefiles.data.backup.BackupFiles
 import com.qtekfun.ultimatefiles.data.backup.BackupManager
 import com.qtekfun.ultimatefiles.data.io.FileStreamCopier
+import com.qtekfun.ultimatefiles.data.network.ConnectionProblems
 import com.qtekfun.ultimatefiles.data.network.FileUploadResumeStore
-import com.qtekfun.ultimatefiles.data.network.UploadResumeStore
 import com.qtekfun.ultimatefiles.data.network.SftpAccountService
 import com.qtekfun.ultimatefiles.data.network.SmbAccountService
 import com.qtekfun.ultimatefiles.data.network.SmbConnector
-import com.qtekfun.ultimatefiles.data.system.IncomingFiles
 import com.qtekfun.ultimatefiles.data.network.SshConnector
+import com.qtekfun.ultimatefiles.data.network.UploadResumeStore
 import com.qtekfun.ultimatefiles.data.network.WebDavAccountService
 import com.qtekfun.ultimatefiles.data.network.WebDavClient
 import com.qtekfun.ultimatefiles.data.repository.ArchiveFileSystemRepository
-import com.qtekfun.ultimatefiles.data.network.ConnectionProblems
 import com.qtekfun.ultimatefiles.data.repository.DataStoreAccountRepository
-import com.qtekfun.ultimatefiles.domain.connection.ConnectionFailureClassifier
-import com.qtekfun.ultimatefiles.domain.connection.ConnectionHealth
-import kotlinx.coroutines.flow.first
+import com.qtekfun.ultimatefiles.data.repository.FileDraftStore
 import com.qtekfun.ultimatefiles.data.repository.FileTransferHistoryRepository
+import com.qtekfun.ultimatefiles.data.repository.FileTransferJournal
 import com.qtekfun.ultimatefiles.data.repository.LocalFileSystemRepository
 import com.qtekfun.ultimatefiles.data.repository.RoutingFileSystemRepository
 import com.qtekfun.ultimatefiles.data.repository.SafFileSystemRepository
@@ -37,42 +35,47 @@ import com.qtekfun.ultimatefiles.data.service.ServiceTransferLauncher
 import com.qtekfun.ultimatefiles.data.service.TransferNotifications
 import com.qtekfun.ultimatefiles.data.system.AndroidKeystoreCipher
 import com.qtekfun.ultimatefiles.data.system.CompositeVolumeChangeSource
+import com.qtekfun.ultimatefiles.data.system.IncomingFiles
 import com.qtekfun.ultimatefiles.data.system.IntentFactory
 import com.qtekfun.ultimatefiles.data.system.RemovableStorage
-import com.qtekfun.ultimatefiles.data.thumbnail.ThumbnailLoader
 import com.qtekfun.ultimatefiles.data.system.SystemVolumeMonitor
+import com.qtekfun.ultimatefiles.data.thumbnail.ThumbnailLoader
 import com.qtekfun.ultimatefiles.domain.clipboard.ClipboardManager
-import com.qtekfun.ultimatefiles.domain.repository.AccountRepository
-import com.qtekfun.ultimatefiles.domain.repository.FileSystemRepository
-import com.qtekfun.ultimatefiles.domain.repository.SecretCipher
+import com.qtekfun.ultimatefiles.domain.connection.ConnectionFailureClassifier
+import com.qtekfun.ultimatefiles.domain.connection.ConnectionHealth
 import com.qtekfun.ultimatefiles.domain.history.TransferHistoryRecorder
 import com.qtekfun.ultimatefiles.domain.history.TransferHistoryRepository
+import com.qtekfun.ultimatefiles.domain.repository.AccountRepository
+import com.qtekfun.ultimatefiles.domain.repository.DraftStore
+import com.qtekfun.ultimatefiles.domain.repository.FileSystemRepository
+import com.qtekfun.ultimatefiles.domain.repository.SecretCipher
 import com.qtekfun.ultimatefiles.domain.repository.UserPreferencesRepository
 import com.qtekfun.ultimatefiles.domain.repository.VolumeChangeSource
-import com.qtekfun.ultimatefiles.data.repository.FileTransferJournal
 import com.qtekfun.ultimatefiles.domain.transfer.TransferCoordinator
 import com.qtekfun.ultimatefiles.domain.transfer.TransferJournal
 import com.qtekfun.ultimatefiles.domain.transfer.TransferServiceLauncher
 import com.qtekfun.ultimatefiles.domain.usecase.BatchCopyUseCase
-import com.qtekfun.ultimatefiles.domain.usecase.SizeAnalyzer
 import com.qtekfun.ultimatefiles.domain.usecase.BatchMoveUseCase
 import com.qtekfun.ultimatefiles.domain.usecase.BuildBreadcrumbUseCase
 import com.qtekfun.ultimatefiles.domain.usecase.DeleteUseCase
 import com.qtekfun.ultimatefiles.domain.usecase.HashCalcUseCase
+import com.qtekfun.ultimatefiles.domain.usecase.SizeAnalyzer
 import com.qtekfun.ultimatefiles.domain.usecase.StreamCopier
 import com.qtekfun.ultimatefiles.domain.usecase.TransferEngine
+import com.qtekfun.ultimatefiles.ui.analysis.SizeAnalysisViewModel
 import com.qtekfun.ultimatefiles.ui.browser.BrowserViewModel
 import com.qtekfun.ultimatefiles.ui.dualpanel.DragDropState
-import com.qtekfun.ultimatefiles.ui.analysis.SizeAnalysisViewModel
 import com.qtekfun.ultimatefiles.ui.history.HistoryViewModel
 import com.qtekfun.ultimatefiles.ui.main.MainViewModel
 import com.qtekfun.ultimatefiles.ui.settings.SettingsViewModel
 import java.io.File
+import kotlinx.coroutines.flow.first
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val appModule = module {
     single { ClipboardManager() }
+    single<DraftStore> { FileDraftStore(File(androidContext().filesDir, "editor-drafts")) }
 
     single<StreamCopier> { FileStreamCopier() }
     single { RemovableStorage(androidContext()) }
