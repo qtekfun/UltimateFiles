@@ -27,6 +27,7 @@ fun FileList(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     folderCounts: Map<String, Int> = emptyMap(),
+    favoritePaths: Set<String> = emptySet(),
 ) {
     if (viewMode == ViewMode.GRID) {
         LazyVerticalGrid(columns = GridCells.Adaptive(GRID_CELL_MIN_WIDTH), modifier = modifier, contentPadding = contentPadding) {
@@ -41,6 +42,7 @@ fun FileList(
                     onDragStart = { onDragStart(item) },
                     onDropInside = onDropInside,
                     entryCount = folderCounts[item.path],
+                    favorite = item.path in favoritePaths,
                     modifier = Modifier.animateItem(),
                 )
             }
@@ -60,6 +62,7 @@ fun FileList(
                 onDragStart = { onDragStart(item) },
                 onDropInside = onDropInside,
                 entryCount = folderCounts[item.path],
+                favorite = item.path in favoritePaths,
                 modifier = Modifier.animateItem(),
             )
         }

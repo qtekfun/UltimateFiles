@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qtekfun.ultimatefiles.R
@@ -94,6 +95,11 @@ class BrowserViewModel(
             }
         }
         viewModelScope.launch {
+            preferences.preferences.map { prefs -> prefs.favorites.map { it.path }.toSet() }.distinctUntilChanged().collect { paths ->
+                _state.update { it.copy(favoritePaths = paths) }
+            }
+        }
+        viewModelScope.launch {
             // Both panels follow the shared sort preference.
             preferences.preferences.map { it.sortOrder }.distinctUntilChanged().collect { order ->
                 _state.update { it.copy(sortOrder = order, items = it.items.sortedByOrder(order)) }
@@ -174,6 +180,7 @@ class BrowserViewModel(
             is BrowserEvent.RequestInstallPermission -> showDialog(BrowserDialog.InstallPermission(event.item, event.chooser))
             BrowserEvent.ConfirmInstallPermission -> confirmInstallPermission()
             is BrowserEvent.InstallPermissionResult -> onInstallPermissionResult(event.granted)
+            is BrowserEvent.ToggleFavorite -> toggleFavorite(event.item)
             is BrowserEvent.StartDrag -> startDrag(event.item)
             is BrowserEvent.DropItems -> dragDrop.requestDrop(event.targetPath)
         }
@@ -289,6 +296,11 @@ class BrowserViewModel(
             }
             _state.update { if (it.currentPath == path) it.copy(folderCounts = counts) else it }
         }
+    }
+
+    private fun toggleFavorite(item: FileItem) {
+        val add = item.path !in _state.value.favoritePaths
+        viewModelScope.launch { preferences.setFavorite(Favorite(item.path, item.name, item.isDirectory), add) }
     }
 
     private fun toggleSelection(item: FileItem) = _state.update { s ->

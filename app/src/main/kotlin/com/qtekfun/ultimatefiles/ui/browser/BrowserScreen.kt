@@ -268,6 +268,7 @@ fun BrowserScreen(
                     FileList(
                         items = state.visibleItems,
                         folderCounts = state.folderCounts,
+                        favoritePaths = state.favoritePaths,
                         viewMode = state.viewMode,
                         selectedPaths = state.selectedPaths,
                         isSelecting = state.isSelecting,
@@ -364,4 +365,5 @@ private fun FileItemAction.toEvent(item: FileItem): BrowserEvent = when (this) {
     FileItemAction.RENAME -> BrowserEvent.RequestRename(item)
     FileItemAction.DELETE -> BrowserEvent.RequestDelete(listOf(item))
     FileItemAction.PROPERTIES -> BrowserEvent.ShowProperties(item)
+    FileItemAction.FAVORITE, FileItemAction.UNFAVORITE -> BrowserEvent.ToggleFavorite(item)
 }

@@ -338,4 +338,7 @@
         <item quantity="one">%d elemento</item>
         <item quantity="other">%d elementos</item>
     </plurals>
+    <string name="action_add_favorite">Añadir a favoritos</string>
+    <string name="action_remove_favorite">Quitar de favoritos</string>
+    <string name="drawer_favorites">Favoritos</string>
 </resources>

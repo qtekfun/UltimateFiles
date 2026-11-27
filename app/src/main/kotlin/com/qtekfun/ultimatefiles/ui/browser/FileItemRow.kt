@@ -62,19 +62,21 @@ import java.text.DateFormat
 import java.util.Date
 
 /** Quick actions offered by the per-row menu (long press or the three-dot button). */
-enum class FileItemAction { SELECT, OPEN_WITH, COPY, CUT, EXTRACT, COMPRESS, RENAME, DELETE, PROPERTIES }
+enum class FileItemAction { SELECT, OPEN_WITH, COPY, CUT, EXTRACT, COMPRESS, FAVORITE, UNFAVORITE, RENAME, DELETE, PROPERTIES }
 
 /**
  * Whether [this] makes sense for [item]: archives are only extracted outside archives, and nothing is packed from
  * inside one. Starting a selection from the menu is pointless for an item that is already selected.
  */
-internal fun FileItemAction.appliesTo(item: FileItem, selected: Boolean = false): Boolean {
+internal fun FileItemAction.appliesTo(item: FileItem, selected: Boolean = false, favorite: Boolean = false): Boolean {
     val insideArchive = ArchivePaths.isArchivePath(item.path)
     return when (this) {
         FileItemAction.SELECT -> !selected
         FileItemAction.OPEN_WITH -> !item.isDirectory
         FileItemAction.EXTRACT -> !item.isDirectory && !insideArchive && ArchiveFormat.of(item.name) != null
         FileItemAction.COMPRESS -> !insideArchive
+        FileItemAction.FAVORITE -> !favorite && !insideArchive
+        FileItemAction.UNFAVORITE -> favorite
         else -> true
     }
 }
@@ -93,6 +95,7 @@ fun FileItemRow(
     modifier: Modifier = Modifier,
     /** Entries in the folder, when known. */
     entryCount: Int? = null,
+    favorite: Boolean = false,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
 
@@ -156,7 +159,7 @@ fun FileItemRow(
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     FileItemAction.entries
-                        .filter { it.appliesTo(item, selected) }
+                        .filter { it.appliesTo(item, selected, favorite) }
                         .forEach { action ->
                             DropdownMenuItem(
                                 text = { Text(stringResource(action.labelRes())) },
@@ -192,6 +195,8 @@ internal fun FileItemAction.labelRes(): Int = when (this) {
     FileItemAction.RENAME -> R.string.action_rename
     FileItemAction.DELETE -> R.string.action_delete
     FileItemAction.PROPERTIES -> R.string.action_properties
+    FileItemAction.FAVORITE -> R.string.action_add_favorite
+    FileItemAction.UNFAVORITE -> R.string.action_remove_favorite
 }
 
 internal fun FileKind.icon(): ImageVector = when (this) {

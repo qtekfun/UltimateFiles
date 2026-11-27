@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.domain.repository
 
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
 import com.qtekfun.ultimatefiles.core.model.PanelId
@@ -28,6 +29,9 @@ interface UserPreferencesRepository {
     suspend fun setDynamicColor(enabled: Boolean)
 
     suspend fun setAccentColor(accent: AccentColor)
+
+    /** Adds [favorite] at the end, or removes the one with its path when [on] is false. */
+    suspend fun setFavorite(favorite: Favorite, on: Boolean)
 
     suspend fun setVerifyCopies(enabled: Boolean)
 

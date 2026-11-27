@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.data.backup
 
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
 import com.qtekfun.ultimatefiles.core.model.PanelId
@@ -33,6 +34,9 @@ private class MemoryPrefs : UserPreferencesRepository {
     override suspend fun setPanelBarPosition(position: PanelBarPosition) { state.value = state.value.copy(panelBarPosition = position) }
     override suspend fun setThemeMode(mode: ThemeMode) { state.value = state.value.copy(themeMode = mode) }
     override suspend fun setAccentColor(accent: AccentColor) { state.value = state.value.copy(accentColor = accent) }
+    override suspend fun setFavorite(favorite: Favorite, on: Boolean) {
+        state.value = state.value.copy(favorites = state.value.favorites.filterNot { it.path == favorite.path } + listOfNotNull(favorite.takeIf { on }))
+    }
     override suspend fun setDynamicColor(enabled: Boolean) { state.value = state.value.copy(dynamicColor = enabled) }
     override suspend fun setVerifyCopies(enabled: Boolean) { state.value = state.value.copy(verifyCopies = enabled) }
     override suspend fun setThumbnailsOnNetwork(enabled: Boolean) { state.value = state.value.copy(thumbnailsOnNetwork = enabled) }

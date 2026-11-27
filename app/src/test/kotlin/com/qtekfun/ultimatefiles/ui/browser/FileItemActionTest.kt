@@ -20,4 +20,12 @@ class FileItemActionTest {
         assertFalse(FileItemAction.SELECT.appliesTo(file, selected = true))
         assertTrue(FileItemAction.COPY.appliesTo(file, selected = true))
     }
+
+    @Test
+    fun theMenuOffersToAddOrToRemoveTheFavorite() {
+        assertTrue(FileItemAction.FAVORITE.appliesTo(file, favorite = false))
+        assertFalse(FileItemAction.UNFAVORITE.appliesTo(file, favorite = false))
+        assertFalse(FileItemAction.FAVORITE.appliesTo(file, favorite = true))
+        assertTrue(FileItemAction.UNFAVORITE.appliesTo(file, favorite = true))
+    }
 }

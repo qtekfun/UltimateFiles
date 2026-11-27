@@ -57,6 +57,7 @@ fun FileGridItem(
     onDropInside: (String) -> Unit,
     modifier: Modifier = Modifier,
     entryCount: Int? = null,
+    favorite: Boolean = false,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     val dropTarget = remember(item.path) {
@@ -121,7 +122,7 @@ fun FileGridItem(
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             FileItemAction.entries
-                .filter { it.appliesTo(item, selected) }
+                .filter { it.appliesTo(item, selected, favorite) }
                 .forEach { action ->
                     DropdownMenuItem(
                         text = { Text(stringResource(action.labelRes())) },

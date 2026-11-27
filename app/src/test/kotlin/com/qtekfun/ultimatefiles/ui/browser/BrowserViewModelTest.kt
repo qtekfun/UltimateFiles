@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import com.qtekfun.ultimatefiles.R
 import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.FileItem
@@ -71,6 +72,10 @@ class BrowserViewModelTest {
 
         override suspend fun setThemeMode(mode: ThemeMode) = flow.update { it.copy(themeMode = mode) }
         override suspend fun setAccentColor(accent: AccentColor) = flow.update { it.copy(accentColor = accent) }
+        override suspend fun setFavorite(favorite: Favorite, on: Boolean) = flow.update { prefs ->
+            prefs.copy(favorites = prefs.favorites.filterNot { it.path == favorite.path } + listOfNotNull(favorite.takeIf { on }))
+        }
+
         override suspend fun setDynamicColor(enabled: Boolean) = flow.update { it.copy(dynamicColor = enabled) }
         override suspend fun setVerifyCopies(enabled: Boolean) = flow.update { it.copy(verifyCopies = enabled) }
         override suspend fun setThumbnailsOnNetwork(enabled: Boolean) = flow.update { it.copy(thumbnailsOnNetwork = enabled) }
@@ -239,6 +244,18 @@ class BrowserViewModelTest {
 
         val state = viewModel.state.first { s -> s.folderCounts.keys.any { it.endsWith("full") } }
         assertEquals(1, state.folderCounts.entries.single { it.key.endsWith("full") }.value)
+    }
+
+    @Test
+    fun `favorites are added and removed from the item menu`() = runTest {
+        val file = loaded().items.first { it.name == "b.txt" }
+
+        viewModel.onEvent(BrowserEvent.ToggleFavorite(file))
+        viewModel.state.first { file.path in it.favoritePaths }
+        assertEquals(listOf(Favorite(file.path, "b.txt", false)), prefs.flow.value.favorites)
+
+        viewModel.onEvent(BrowserEvent.ToggleFavorite(file))
+        viewModel.state.first { it.favoritePaths.isEmpty() }
     }
 
     @Test

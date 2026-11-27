@@ -1,60 +1,23 @@
 package com.qtekfun.ultimatefiles.ui.main
 
+import com.qtekfun.ultimatefiles.core.model.FileItem
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
-import com.qtekfun.ultimatefiles.core.util.formatBytes
-import com.qtekfun.ultimatefiles.BuildConfig
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.draw.clip
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.background
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.DataUsage
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Eject
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -76,25 +39,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.zIndex
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.qtekfun.ultimatefiles.R
-import com.qtekfun.ultimatefiles.ui.components.connectionShortReason
 import com.qtekfun.ultimatefiles.ui.components.connectionMessage
 import com.qtekfun.ultimatefiles.ui.components.ConnectionSnackbarVisuals
 import com.qtekfun.ultimatefiles.ui.components.ConnectionAwareSnackbar
 import com.qtekfun.ultimatefiles.core.util.RemoteAccounts
-import com.qtekfun.ultimatefiles.core.model.ConnectionProblem
-import androidx.compose.material.icons.filled.Warning
 import com.qtekfun.ultimatefiles.core.model.PanelId
-import com.qtekfun.ultimatefiles.core.model.StorageKind
 import com.qtekfun.ultimatefiles.core.model.StorageVolume
 import com.qtekfun.ultimatefiles.data.system.IntentFactory
 import com.qtekfun.ultimatefiles.ui.browser.BrowserEvent
@@ -176,10 +133,10 @@ fun MainScreen() {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // The browser's header is filled with the accent, so the status bar icons over it are light; elsewhere they follow the theme.
+    // The headers of the browser and of the drawer are filled with the accent, so the status bar icons over them are light.
     val view = LocalView.current
     val darkSurface = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val overHeader = screen == AppScreen.BROWSER && drawerState.targetValue == DrawerValue.Closed
+    val overHeader = screen == AppScreen.BROWSER
     val darkIcons = !darkSurface && !overHeader
     LaunchedEffect(darkIcons) {
         val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
@@ -237,6 +194,17 @@ fun MainScreen() {
         scope.launch { drawerState.close() }
     }
 
+    /** A folder opens; a file is shown, selected, in its own folder. */
+    fun openFavorite(favorite: Favorite) {
+        if (favorite.isDirectory) {
+            openInActivePanel(favorite.path)
+            return
+        }
+        val item = FileItem(favorite.path, favorite.name, false, 0L, 0L, null)
+        panels.firstOrNull { it.id == state.activePanel }?.viewModel?.onEvent(BrowserEvent.Reveal(item))
+        scope.launch { drawerState.close() }
+    }
+
     // An archive another app sent here opens as a folder in the active panel.
     val incomingFiles = remember { koin.get<IncomingFiles>() }
     val incoming by incomingFiles.pending.collectAsStateWithLifecycle()
@@ -253,11 +221,14 @@ fun MainScreen() {
             drawerState = drawerState,
             gesturesEnabled = screen == AppScreen.BROWSER,
             drawerContent = {
-                DrawerContent(
+                AppDrawer(
                     volumes = state.volumes,
                     unreachable = unreachable,
                     shortcuts = state.shortcuts,
+                    favorites = state.favorites,
                     onOpen = ::openInActivePanel,
+                    onOpenFavorite = ::openFavorite,
+                    onRemoveFavorite = viewModel::removeFavorite,
                     onAddStorage = { pickFolder.launch(null) },
                     onAddAccount = {
                         showAddAccount = true
@@ -504,213 +475,6 @@ private fun rememberBrowserViewModel(panel: PanelId, main: MainViewModel): Brows
             initializer { koin.get<BrowserViewModel>(parameters = { parametersOf(panel) }) }
         },
     )
-}
-
-/** The three-dot menu of a network account in the drawer. */
-@Composable
-private fun AccountMenu(onEdit: () -> Unit, onRename: () -> Unit, onRemove: () -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { open = true }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
-        }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.account_edit)) },
-                leadingIcon = { Icon(Icons.Filled.Settings, contentDescription = null) },
-                onClick = {
-                    open = false
-                    onEdit()
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.action_rename)) },
-                leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
-                onClick = {
-                    open = false
-                    onRename()
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.account_remove)) },
-                leadingIcon = { Icon(Icons.Filled.CloudOff, contentDescription = null) },
-                onClick = {
-                    open = false
-                    onRemove()
-                },
-            )
-        }
-    }
-}
-
-/** The app's icon, name and version at the top of the drawer. */
-@Composable
-private fun DrawerHeader() {
-    Row(
-        modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(colorResource(R.color.ic_launcher_background)),
-        ) {
-            Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.fillMaxSize())
-        }
-        Column {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
-            Text(
-                text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-/** A thin bar of how full the volume is and how much room is left; nothing for volumes that cannot tell. */
-@Composable
-private fun SpaceUsage(volume: StorageVolume) {
-    val total = volume.totalBytes ?: return
-    val free = volume.freeBytes ?: return
-    Column(Modifier.padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        LinearProgressIndicator(
-            progress = { ((total - free).toFloat() / total).coerceIn(0f, 1f) },
-            modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
-            gapSize = 0.dp,
-            drawStopIndicator = {},
-        )
-        Text(
-            text = stringResource(R.string.drawer_space_free, formatBytes(free), formatBytes(total)),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun DrawerContent(
-    volumes: List<StorageVolume>,
-    unreachable: Map<String, ConnectionProblem>,
-    shortcuts: List<Shortcut>,
-    onOpen: (String) -> Unit,
-    onAddStorage: () -> Unit,
-    onAddAccount: () -> Unit,
-    onRemoveAccount: (StorageVolume) -> Unit,
-    onRenameAccount: (StorageVolume) -> Unit,
-    onEditAccount: (StorageVolume) -> Unit,
-    onShowHistory: () -> Unit,
-    onShowSettings: () -> Unit,
-    onAnalyze: (StorageVolume) -> Unit,
-    onEject: () -> Unit,
-) {
-    ModalDrawerSheet {
-        Column(Modifier.verticalScroll(rememberScrollState())) {
-            DrawerHeader()
-            volumes.forEach { volume ->
-                NavigationDrawerItem(
-                    label = {
-                        val problem = RemoteAccounts.idOfVolume(volume.id)?.let { unreachable[it] }
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(volume.label, modifier = Modifier.weight(1f, fill = false))
-                                if (problem != null) {
-                                    Icon(
-                                        Icons.Filled.Warning,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.error,
-                                    )
-                                }
-                            }
-                            if (problem != null) {
-                                Text(
-                                    text = LocalResources.current.connectionShortReason(problem.kind),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            } else {
-                                SpaceUsage(volume)
-                            }
-                        }
-                    },
-                    icon = { Icon(volume.icon(), contentDescription = null) },
-                    badge = {
-                        if (volume.kind == StorageKind.NETWORK) {
-                            AccountMenu(onEdit = { onEditAccount(volume) }, onRename = { onRenameAccount(volume) }, onRemove = { onRemoveAccount(volume) })
-                        } else {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = { onAnalyze(volume) }) {
-                                    Icon(Icons.Filled.DataUsage, contentDescription = stringResource(R.string.action_analyze_size))
-                                }
-                                if (volume.isEjectable) {
-                                    IconButton(onClick = onEject) {
-                                        Icon(Icons.Filled.Eject, contentDescription = stringResource(R.string.drawer_eject))
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    selected = false,
-                    onClick = { onOpen(volume.rootPath) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-            }
-            if (shortcuts.isNotEmpty()) HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            shortcuts.forEach { shortcut ->
-                NavigationDrawerItem(
-                    label = { Text(stringResource(shortcut.labelRes)) },
-                    icon = { Icon(shortcut.kind.icon(), contentDescription = null) },
-                    selected = false,
-                    onClick = { onOpen(shortcut.path) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-            }
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            NavigationDrawerItem(
-                label = { Text(stringResource(R.string.drawer_add_storage)) },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                selected = false,
-                onClick = onAddStorage,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
-            NavigationDrawerItem(
-                label = { Text(stringResource(R.string.drawer_add_account)) },
-                icon = { Icon(Icons.Filled.Cloud, contentDescription = null) },
-                selected = false,
-                onClick = onAddAccount,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
-            NavigationDrawerItem(
-                label = { Text(stringResource(R.string.history_title)) },
-                icon = { Icon(Icons.Filled.History, contentDescription = null) },
-                selected = false,
-                onClick = onShowHistory,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
-            NavigationDrawerItem(
-                label = { Text(stringResource(R.string.settings_title)) },
-                icon = { Icon(Icons.Filled.Settings, contentDescription = null) },
-                selected = false,
-                onClick = onShowSettings,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
-        }
-    }
-}
-
-private fun StorageVolume.icon(): ImageVector = when (kind) {
-    StorageKind.INTERNAL -> Icons.Filled.PhoneAndroid
-    StorageKind.NETWORK -> Icons.Filled.Cloud
-    else -> Icons.Filled.Usb
-}
-
-private fun ShortcutKind.icon(): ImageVector = when (this) {
-    ShortcutKind.DOWNLOADS -> Icons.Filled.Download
-    ShortcutKind.DOCUMENTS -> Icons.Filled.Description
-    ShortcutKind.PHOTOS -> Icons.Filled.PhotoLibrary
 }
 
 private const val KEY_BATTERY_HINT = "battery_hint_answered"

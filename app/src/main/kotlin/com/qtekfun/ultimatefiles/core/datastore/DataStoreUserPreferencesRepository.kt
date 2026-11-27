@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.core.datastore
 
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -33,6 +34,7 @@ class DataStoreUserPreferencesRepository(private val store: DataStore<Preference
             themeMode = prefs[THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
             dynamicColor = prefs[DYNAMIC_COLOR] ?: false,
             accentColor = prefs[ACCENT_COLOR]?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() } ?: AccentColor.CYAN,
+            favorites = readFavorites(prefs),
             verifyCopies = prefs[VERIFY_COPIES] ?: false,
             thumbnailsOnNetwork = prefs[THUMBNAILS_ON_NETWORK] ?: false,
         )
@@ -76,6 +78,13 @@ class DataStoreUserPreferencesRepository(private val store: DataStore<Preference
         store.edit { it[ACCENT_COLOR] = accent.name }
     }
 
+    override suspend fun setFavorite(favorite: Favorite, on: Boolean) {
+        store.edit { prefs ->
+            val others = readFavorites(prefs).filterNot { it.path == favorite.path }
+            prefs[FAVORITES] = FavoriteCodec.encode(if (on) others + favorite else others)
+        }
+    }
+
     override suspend fun setVerifyCopies(enabled: Boolean) {
         store.edit { it[VERIFY_COPIES] = enabled }
     }
@@ -95,6 +104,10 @@ class DataStoreUserPreferencesRepository(private val store: DataStore<Preference
         val SORT_ASCENDING = booleanPreferencesKey("sort_ascending")
         val PANEL_IDS = stringPreferencesKey("panel_ids")
         val PANEL_BAR_POSITION = stringPreferencesKey("panel_bar_position")
+
+        val FAVORITES = stringPreferencesKey("favorites")
+
+        fun readFavorites(prefs: Preferences): List<Favorite> = prefs[FAVORITES]?.let(FavoriteCodec::decode).orEmpty()
 
         /** The first two panels keep the keys of the original left/right panels. */
         fun lastPathKey(panel: PanelId) = stringPreferencesKey(

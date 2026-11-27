@@ -18,6 +18,7 @@ data class BrowserState(
     val volume: StorageVolume? = null,
     /** Entries inside each listed folder, by path, filled after the listing where it is cheap to know. */
     val folderCounts: Map<String, Int> = emptyMap(),
+    val favoritePaths: Set<String> = emptySet(),
     val items: List<FileItem> = emptyList(),
     val selectedPaths: Set<String> = emptySet(),
     val isLoading: Boolean = true,
@@ -84,6 +85,7 @@ sealed interface BrowserEvent {
 
     /** The user came back from the system settings. */
     data class InstallPermissionResult(val granted: Boolean) : BrowserEvent
+    data class ToggleFavorite(val item: FileItem) : BrowserEvent
     data class StartDrag(val item: FileItem) : BrowserEvent
     data class DropItems(val targetPath: String) : BrowserEvent
 
