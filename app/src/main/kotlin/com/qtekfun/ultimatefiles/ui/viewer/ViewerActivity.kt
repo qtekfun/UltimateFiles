@@ -41,6 +41,7 @@ class ViewerActivity : ComponentActivity() {
         enableEdgeToEdge()
         val uri: Uri? = intent.data
         val name = intent.getStringExtra(EXTRA_NAME).orEmpty()
+        val path = intent.getStringExtra(EXTRA_PATH)
         val kind = intent.getStringExtra(EXTRA_KIND)?.let { runCatching { ViewerKind.valueOf(it) }.getOrNull() }
         setContent {
             val koin = remember { KoinPlatform.getKoin() }
@@ -52,7 +53,14 @@ class ViewerActivity : ComponentActivity() {
                 themeMode = preferences?.themeMode ?: ThemeMode.SYSTEM,
                 dynamicColor = preferences?.dynamicColor ?: true,
             ) {
-                ViewerScreen(name = name, uri = uri, kind = kind, onBack = { finish() })
+                if (kind == ViewerKind.TEXT && path != null) {
+                    val editor = viewModel<TextEditorViewModel>(
+                        factory = viewModelFactory { initializer { TextEditorViewModel(koin.get(), path) } },
+                    )
+                    TextEditorScreen(name = name, viewModel = editor, onClose = { finish() })
+                } else {
+                    ViewerScreen(name = name, uri = uri, kind = kind, onBack = { finish() })
+                }
             }
         }
     }
@@ -60,6 +68,9 @@ class ViewerActivity : ComponentActivity() {
     companion object {
         const val EXTRA_NAME = "viewer_name"
         const val EXTRA_KIND = "viewer_kind"
+
+        /** The file's path as the repository knows it. */
+        const val EXTRA_PATH = "viewer_path"
     }
 }
 
@@ -82,9 +93,9 @@ private fun ViewerScreen(name: String, uri: Uri?, kind: ViewerKind?, onBack: () 
         when {
             uri == null || kind == null -> Text(stringResource(R.string.viewer_unsupported), modifier = content)
             kind == ViewerKind.IMAGE -> ImageViewer(uri, content)
-            kind == ViewerKind.TEXT -> TextViewer(uri, content)
             kind == ViewerKind.PDF -> PdfViewer(uri, content)
-            else -> MediaViewer(uri, content)
+            kind == ViewerKind.MEDIA -> MediaViewer(uri, content)
+            else -> Text(stringResource(R.string.viewer_unsupported), modifier = content)
         }
     }
 }

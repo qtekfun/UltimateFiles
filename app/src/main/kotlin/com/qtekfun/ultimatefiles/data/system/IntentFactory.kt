@@ -30,6 +30,7 @@ class IntentFactory(private val context: Context) {
         return Intent(context, ViewerActivity::class.java)
             .setData(uriFor(item))
             .putExtra(ViewerActivity.EXTRA_NAME, item.name)
+            .putExtra(ViewerActivity.EXTRA_PATH, item.path)
             .putExtra(ViewerActivity.EXTRA_KIND, kind.name)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }

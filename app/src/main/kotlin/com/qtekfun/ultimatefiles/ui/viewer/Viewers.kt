@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,7 +33,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.qtekfun.ultimatefiles.R
@@ -52,7 +48,6 @@ private sealed interface Loaded<out T> {
 }
 
 private const val MAX_IMAGE_SIDE = 2048
-private const val MAX_TEXT_BYTES = 1024 * 1024
 
 @Composable
 internal fun ImageViewer(uri: Uri, modifier: Modifier) {
@@ -91,43 +86,6 @@ internal fun ImageViewer(uri: Uri, modifier: Modifier) {
                     }
                     .graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY),
             )
-        }
-    }
-}
-
-@Composable
-internal fun TextViewer(uri: Uri, modifier: Modifier) {
-    val resolver = LocalContext.current.contentResolver
-    val state by produceState<Loaded<Pair<String, Boolean>>>(Loaded.Loading, uri) {
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                resolver.openInputStream(uri)!!.use { input ->
-                    val buffer = ByteArray(MAX_TEXT_BYTES + 1)
-                    var read = 0
-                    while (read < buffer.size) {
-                        val n = input.read(buffer, read, buffer.size - read)
-                        if (n < 0) break
-                        read += n
-                    }
-                    val truncated = read > MAX_TEXT_BYTES
-                    String(buffer, 0, minOf(read, MAX_TEXT_BYTES), Charsets.UTF_8) to truncated
-                }
-            }.fold({ Loaded.Ready(it) }, { Loaded.Failed(it.message) })
-        }
-    }
-    when (val current = state) {
-        Loaded.Loading -> Box(modifier, Alignment.Center) { CircularProgressIndicator() }
-        is Loaded.Failed -> ViewerMessage(R.string.viewer_error, modifier, current.message)
-        is Loaded.Ready -> {
-            val (text, truncated) = current.value
-            SelectionContainer {
-                androidx.compose.foundation.layout.Column(modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
-                    if (truncated) {
-                        Text(stringResource(R.string.viewer_truncated), color = MaterialTheme.colorScheme.tertiary)
-                    }
-                    Text(text, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
-                }
-            }
         }
     }
 }

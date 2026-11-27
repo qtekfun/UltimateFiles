@@ -216,7 +216,6 @@
     <string name="check_all_ok">Everything looks fine.</string>
     <string name="viewer_unsupported">This file cannot be shown here.</string>
     <string name="viewer_error">Cannot show this file</string>
-    <string name="viewer_truncated">Showing only the first megabyte.</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_export">Export settings and accounts</string>
     <string name="settings_export_summary">Save your settings and Nextcloud accounts to a file</string>
