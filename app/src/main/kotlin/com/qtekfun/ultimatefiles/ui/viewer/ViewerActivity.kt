@@ -58,6 +58,11 @@ class ViewerActivity : ComponentActivity() {
                         factory = viewModelFactory { initializer { TextEditorViewModel(koin.get(), path, koin.get()) } },
                     )
                     TextEditorScreen(name = name, viewModel = editor, onClose = { finish() })
+                } else if (kind == ViewerKind.IMAGE && path != null) {
+                    val gallery = viewModel<ImageViewModel>(
+                        factory = viewModelFactory { initializer { ImageViewModel(koin.get(), path) } },
+                    )
+                    ImageGalleryScreen(name = name, viewModel = gallery, onBack = { finish() })
                 } else {
                     val pdf = if (kind == ViewerKind.PDF && uri != null) {
                         viewModel<PdfViewModel>(
@@ -104,7 +109,6 @@ private fun ViewerScreen(name: String, uri: Uri?, kind: ViewerKind?, pdf: PdfVie
         val content = Modifier.padding(padding).fillMaxSize()
         when {
             uri == null || kind == null -> Text(stringResource(R.string.viewer_unsupported), modifier = content)
-            kind == ViewerKind.IMAGE -> ImageViewer(uri, content)
             pdf != null -> PdfViewer(pdf, content)
             kind == ViewerKind.MEDIA -> MediaViewer(uri, content)
             else -> Text(stringResource(R.string.viewer_unsupported), modifier = content)

@@ -31,4 +31,16 @@
     <string name="pdf_go_to_page">Go to page</string>
     <string name="pdf_page_range">Page (1–%1$d)</string>
     <string name="pdf_go">Go</string>
+    <string name="image_position">%1$d of %2$d</string>
+    <string name="image_rotate">Rotate</string>
+    <string name="image_info">Info</string>
+    <string name="image_info_name">Name</string>
+    <string name="image_info_dimensions">Dimensions</string>
+    <string name="image_dimensions_value">%1$d × %2$d</string>
+    <string name="image_info_size">Size</string>
+    <string name="image_info_modified">Modified</string>
+    <string name="image_info_taken">Taken</string>
+    <string name="image_info_camera">Camera</string>
+    <string name="image_info_location">Location</string>
+    <string name="viewer_close">Close</string>
 </resources>
