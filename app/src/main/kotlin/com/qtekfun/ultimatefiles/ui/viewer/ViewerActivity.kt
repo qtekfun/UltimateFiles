@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.qtekfun.ultimatefiles.R
+import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.ThemeMode
 import com.qtekfun.ultimatefiles.domain.usecase.ViewerKind
 import com.qtekfun.ultimatefiles.ui.settings.SettingsViewModel
@@ -57,7 +58,8 @@ class ViewerActivity : ComponentActivity() {
             val preferences by settings.preferences.collectAsStateWithLifecycle()
             UltimateFilesTheme(
                 themeMode = preferences?.themeMode ?: ThemeMode.SYSTEM,
-                dynamicColor = preferences?.dynamicColor ?: true,
+                dynamicColor = preferences?.dynamicColor ?: false,
+                accent = preferences?.accentColor ?: AccentColor.CYAN,
             ) {
                 if (kind == null && uri != null) {
                     OpenAsScreen(name = name, onKind = { kind = it }, onOtherApp = { openElsewhere(uri) }, onBack = { finish() })

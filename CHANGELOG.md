@@ -4,6 +4,23 @@ All notable changes. Versions follow [SemVer](https://semver.org/); the notes of
 
 ## [Unreleased]
 
+## [0.11.0-rc.1] - 2026-11-27
+
+### Added
+- Text editor: edit and save, undo and redo, find and replace, line numbers and word wrap, with syntax highlighting and Markdown preview.
+- PDF viewer with zoom, page counter, go to page and last position remembered.
+- Image viewer: swipe between the pictures of a folder, double-tap zoom, rotate and information.
+- New audio and video player.
+- "Open as" for files of unknown type.
+- Favourite folders, categories (images, video, audio, documents, APK) and recent files in the side menu.
+- Settings shows whether the app may install APKs, with a button to allow it.
+
+### Changed
+- New look, with cyan as the default accent (blue, purple and slate in Settings); dynamic colour is now off by default.
+- Coloured top bar, panels as tabs in portrait, file type tiles, richer list and grid, and selection actions at the bottom.
+- The "+" button of the panel bar is gone; "New folder" is now visible in the top bar.
+- Updated build tools and libraries.
+
 ## [0.10.3] - 2026-11-12
 
 ### Fixed
