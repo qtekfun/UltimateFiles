@@ -4,7 +4,7 @@ All notable changes. Versions follow [SemVer](https://semver.org/); the notes of
 
 ## [Unreleased]
 
-## [0.11.0-rc.1] - 2026-11-27
+## [0.11.0] - 2026-11-28
 
 ### Added
 - Text editor: edit and save, undo and redo, find and replace, line numbers and word wrap, with syntax highlighting and Markdown preview.
