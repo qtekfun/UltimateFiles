@@ -12,6 +12,7 @@ import com.qtekfun.ultimatefiles.domain.repository.FileSystemRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -23,6 +24,22 @@ import java.io.OutputStream
  */
 class SafFileSystemRepository(private val context: Context) : FileSystemRepository {
     private val resolver get() = context.contentResolver
+    private val guard by lazy { GuardedOverwrite(File(context.filesDir, "save-backups")) }
+
+    override suspend fun replaceContent(item: FileItem, bytes: ByteArray): Result<Unit> = ioResult {
+        val uri = Uri.parse(item.path)
+        guard.overwrite(
+            key = item.path,
+            bytes = bytes,
+            read = { resolver.openInputStream(uri)?.use { it.readBytes() } ?: throw IOException("Cannot open ${item.name}") },
+            write = { content ->
+                (resolver.openOutputStream(uri, "wt") ?: throw IOException("Cannot write ${item.name}")).use { it.write(content) }
+            },
+        )
+    }
+
+    override suspend fun interruptedSaveBackup(item: FileItem): ByteArray? =
+        ioResult { guard.pendingBackup(item.path) }.getOrNull()
 
     /** Persists the grant returned by `ACTION_OPEN_DOCUMENT_TREE` so the volume survives restarts. */
     fun addTree(treeUri: Uri) {

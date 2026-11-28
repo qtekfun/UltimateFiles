@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.data.repository
 
+import com.qtekfun.ultimatefiles.domain.usecase.CategoryPaths
 import com.qtekfun.ultimatefiles.core.model.FileItem
 import com.qtekfun.ultimatefiles.core.model.StorageVolume
 import com.qtekfun.ultimatefiles.data.system.RemovableStorage
@@ -16,6 +17,7 @@ class RoutingFileSystemRepository(
     private val sftp: FileSystemRepository,
     private val archive: FileSystemRepository,
     private val smb: FileSystemRepository = archive,
+    private val categories: FileSystemRepository = archive,
 ) : FileSystemRepository {
 
     private fun backendFor(path: String) = when {
@@ -24,6 +26,7 @@ class RoutingFileSystemRepository(
         path.startsWith(SftpFileSystemRepository.SCHEME) -> sftp
         path.startsWith(SmbFileSystemRepository.SCHEME) -> smb
         ArchivePaths.isArchivePath(path) -> archive
+        CategoryPaths.isCategoryPath(path) -> categories
         else -> local
     }
 
@@ -39,6 +42,8 @@ class RoutingFileSystemRepository(
     override suspend fun listFiles(uriOrPath: String) = backendFor(uriOrPath).listFiles(uriOrPath)
 
     override suspend fun stat(uriOrPath: String) = backendFor(uriOrPath).stat(uriOrPath)
+
+    override suspend fun childCount(uriOrPath: String) = backendFor(uriOrPath).childCount(uriOrPath)
 
     override suspend fun parentOf(uriOrPath: String) = backendFor(uriOrPath).parentOf(uriOrPath)
 
@@ -66,6 +71,10 @@ class RoutingFileSystemRepository(
         mimeType: String,
         overwrite: Boolean,
     ): Result<OutputStream> = backendFor(parentUriOrPath).openOutput(parentUriOrPath, name, mimeType, overwrite)
+
+    override suspend fun replaceContent(item: FileItem, bytes: ByteArray) = backendFor(item.path).replaceContent(item, bytes)
+
+    override suspend fun interruptedSaveBackup(item: FileItem) = backendFor(item.path).interruptedSaveBackup(item)
 
     private companion object {
         const val SAF_SCHEME = "content://"

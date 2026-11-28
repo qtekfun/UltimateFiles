@@ -19,6 +19,12 @@ interface FileSystemRepository {
 
     suspend fun stat(uriOrPath: String): Result<FileItem>
 
+    /**
+     * How many entries the folder holds, or null when finding out is not cheap (anything over the network, the system
+     * picker, archives). Only a backend that can answer from local storage overrides this.
+     */
+    suspend fun childCount(uriOrPath: String): Int? = null
+
     /** Parent directory, or null when [uriOrPath] is a volume root. */
     suspend fun parentOf(uriOrPath: String): String?
 
@@ -43,4 +49,14 @@ interface FileSystemRepository {
         mimeType: String,
         overwrite: Boolean,
     ): Result<OutputStream>
+
+    /**
+     * Replaces the content of the existing file [item] with [bytes] so that a failure never leaves it truncated.
+     * Backends that cannot promise that fail without touching the file.
+     */
+    suspend fun replaceContent(item: FileItem, bytes: ByteArray): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Editing is not supported here"))
+
+    /** Previous content of [item] when a [replaceContent] was interrupted before finishing, else null. */
+    suspend fun interruptedSaveBackup(item: FileItem): ByteArray? = null
 }

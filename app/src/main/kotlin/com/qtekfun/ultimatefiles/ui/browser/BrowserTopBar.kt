@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -21,6 +22,14 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import com.qtekfun.ultimatefiles.ui.theme.LocalTopBarColors
+import com.qtekfun.ultimatefiles.core.util.formatBytes
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -41,7 +50,10 @@ import com.qtekfun.ultimatefiles.core.model.ViewMode
 import com.qtekfun.ultimatefiles.ui.components.BreadcrumbBar
 import com.qtekfun.ultimatefiles.ui.components.labelRes
 
-/** Top bar at rest: drawer, interactive breadcrumb, search and the directory overflow menu. */
+/**
+ * Top bar at rest, on the header colour: drawer, volume name and free space, new folder, search and the directory
+ * overflow menu, with the breadcrumb as a row of chips underneath.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowserTopBar(
@@ -61,107 +73,151 @@ fun BrowserTopBar(
     modifier: Modifier = Modifier,
     /** Null where the folder cannot be analysed (a server, an archive). */
     onAnalyze: (() -> Unit)? = null,
+    /** Name of the volume being browsed; null falls back to the first breadcrumb segment. */
+    volumeName: String? = null,
+    /** Free room on that volume, when the backend can tell. */
+    freeBytes: Long? = null,
+    /** False where nothing can be created, which hides new folder and new file. */
+    canCreate: Boolean = true,
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
 ) {
     var menuOpen by rememberSaveable { mutableStateOf(false) }
-    PanelTopBar(
-        modifier = modifier,
-        windowInsets = windowInsets,
-        title = {
+    val colors = LocalTopBarColors.current
+    Surface(color = colors.container, contentColor = colors.content, modifier = modifier) {
+        Column {
+            PanelTopBar(
+                windowInsets = windowInsets,
+                containerColor = colors.container,
+                titleColor = colors.content,
+                navigationIconColor = colors.content,
+                actionIconColor = colors.content,
+                title = {
+                    if (searchQuery == null) {
+                        VolumeTitle(volumeName ?: segments.firstOrNull()?.label.orEmpty(), freeBytes)
+                    } else {
+                        val focus = remember { FocusRequester() }
+                        LaunchedEffect(Unit) { focus.requestFocus() }
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = onSearchQueryChange,
+                            singleLine = true,
+                            placeholder = { Text(stringResource(R.string.search_hint)) },
+                            colors = TextFieldDefaults.colors(
+                                focusedTextColor = colors.content,
+                                unfocusedTextColor = colors.content,
+                                cursorColor = colors.content,
+                                focusedPlaceholderColor = colors.content,
+                                unfocusedPlaceholderColor = colors.content,
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                            modifier = Modifier.fillMaxWidth().focusRequester(focus),
+                        )
+                    }
+                },
+                navigationIcon = {
+                    if (searchQuery == null) {
+                        IconButton(onClick = onMenuClick) {
+                            Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.action_open_drawer))
+                        }
+                    } else {
+                        IconButton(onClick = onSearchClick) {
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close_search))
+                        }
+                    }
+                },
+                actions = {
+                    if (searchQuery == null) {
+                        if (canCreate) {
+                            IconButton(onClick = onNewFolder) {
+                                Icon(Icons.Filled.CreateNewFolder, contentDescription = stringResource(R.string.action_new_folder))
+                            }
+                        }
+                        IconButton(onClick = onSearchClick) {
+                            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
+                        }
+                    }
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            if (canCreate) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.action_new_file)) },
+                                    onClick = { menuOpen = false; onNewFile() },
+                                )
+                                HorizontalDivider()
+                            }
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_sort_by)) },
+                                enabled = false,
+                                onClick = {},
+                            )
+                            SortField.entries.forEach { field ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(field.labelRes())) },
+                                    trailingIcon = {
+                                        if (field == sortOrder.field) {
+                                            Icon(
+                                                imageVector = if (sortOrder.ascending) {
+                                                    Icons.Filled.ArrowUpward
+                                                } else {
+                                                    Icons.Filled.ArrowDownward
+                                                },
+                                                contentDescription = null,
+                                            )
+                                        }
+                                    },
+                                    onClick = { menuOpen = false; onSortSelected(field) },
+                                )
+                            }
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = {
+                                    Text(stringResource(if (viewMode == ViewMode.LIST) R.string.action_view_grid else R.string.action_view_list))
+                                },
+                                onClick = { menuOpen = false; onToggleViewMode() },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_select_all)) },
+                                onClick = { menuOpen = false; onSelectAll() },
+                            )
+                            if (onAnalyze != null) {
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.action_analyze_size)) },
+                                    onClick = { menuOpen = false; onAnalyze() },
+                                )
+                            }
+                        }
+                    }
+                },
+            )
             if (searchQuery == null) {
-                BreadcrumbBar(segments = segments, onSegmentClick = onSegmentClick)
-            } else {
-                val focus = remember { FocusRequester() }
-                LaunchedEffect(Unit) { focus.requestFocus() }
-                TextField(
-                    value = searchQuery,
-                    onValueChange = onSearchQueryChange,
-                    singleLine = true,
-                    placeholder = { Text(stringResource(R.string.search_hint)) },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                    modifier = Modifier.fillMaxWidth().focusRequester(focus),
+                BreadcrumbBar(
+                    segments = segments,
+                    onSegmentClick = onSegmentClick,
+                    modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
                 )
             }
-        },
-        navigationIcon = {
-            if (searchQuery == null) {
-                IconButton(onClick = onMenuClick) {
-                    Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.action_open_drawer))
-                }
-            } else {
-                IconButton(onClick = onSearchClick) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close_search))
-                }
-            }
-        },
-        actions = {
-            if (searchQuery == null) {
-                IconButton(onClick = onSearchClick) {
-                    Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
-                }
-            }
-            Box {
-                IconButton(onClick = { menuOpen = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
-                }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_new_folder)) },
-                        onClick = { menuOpen = false; onNewFolder() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_new_file)) },
-                        onClick = { menuOpen = false; onNewFile() },
-                    )
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_sort_by)) },
-                        enabled = false,
-                        onClick = {},
-                    )
-                    SortField.entries.forEach { field ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(field.labelRes())) },
-                            trailingIcon = {
-                                if (field == sortOrder.field) {
-                                    Icon(
-                                        imageVector = if (sortOrder.ascending) {
-                                            Icons.Filled.ArrowUpward
-                                        } else {
-                                            Icons.Filled.ArrowDownward
-                                        },
-                                        contentDescription = null,
-                                    )
-                                }
-                            },
-                            onClick = { menuOpen = false; onSortSelected(field) },
-                        )
-                    }
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(if (viewMode == ViewMode.LIST) R.string.action_view_grid else R.string.action_view_list))
-                        },
-                        onClick = { menuOpen = false; onToggleViewMode() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_select_all)) },
-                        onClick = { menuOpen = false; onSelectAll() },
-                    )
-                    if (onAnalyze != null) {
-                        HorizontalDivider()
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_analyze_size)) },
-                            onClick = { menuOpen = false; onAnalyze() },
-                        )
-                    }
-                }
-            }
-        },
-    )
+        }
+    }
+}
+
+@Composable
+private fun VolumeTitle(name: String, freeBytes: Long?) {
+    Column {
+        Text(name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (freeBytes != null) {
+            Text(
+                text = stringResource(R.string.browser_space_free, formatBytes(freeBytes)),
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }

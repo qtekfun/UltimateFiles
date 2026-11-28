@@ -1,10 +1,17 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import android.content.ActivityNotFoundException
 import com.qtekfun.ultimatefiles.domain.usecase.ArchiveFormat
 import com.qtekfun.ultimatefiles.domain.usecase.SizeAnalyzer
 import com.qtekfun.ultimatefiles.domain.usecase.ArchivePaths
 import androidx.activity.compose.BackHandler
+import com.qtekfun.ultimatefiles.ui.components.InstallPermissionDialog
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -87,14 +94,18 @@ fun BrowserScreen(
     val intents = remember { KoinPlatform.getKoin().get<IntentFactory>() }
     val snackbar = remember { SnackbarHostState() }
     val onEvent = viewModel::onEvent
+    val scope = rememberCoroutineScope()
+    val installSettings = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        // The settings page reports no result: what counts is whether the permission is there now.
+        onEvent(BrowserEvent.InstallPermissionResult(intents.canInstallPackages()))
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is BrowserEffect.OpenFile -> try {
                     if (intents.needsInstallPermission(effect.item)) {
-                        context.startActivity(intents.installPermissionSettings())
-                        snackbar.showSnackbar(resources.getString(R.string.install_permission_needed))
+                        onEvent(BrowserEvent.RequestInstallPermission(effect.item, effect.chooser))
                     } else {
                         context.startActivity(intents.view(effect.item, effect.chooser))
                     }
@@ -170,24 +181,17 @@ fun BrowserScreen(
         },
         topBar = {
             if (state.isSelecting) {
-                val selected = state.selectedItems
                 SelectionActionBar(
-                    selectedCount = selected.size,
+                    selectedCount = state.selectedItems.size,
                     onClearSelection = { onEvent(BrowserEvent.ClearSelection) },
-                    onCopy = { onEvent(BrowserEvent.Copy(selected)) },
-                    onCut = { onEvent(BrowserEvent.Cut(selected)) },
-                    onDelete = { onEvent(BrowserEvent.RequestDelete(selected)) },
-                    onShare = { onEvent(BrowserEvent.Share(selected)) },
-                    onRename = { selected.singleOrNull()?.let { onEvent(BrowserEvent.RequestRename(it)) } },
-                    onProperties = { selected.singleOrNull()?.let { onEvent(BrowserEvent.ShowProperties(it)) } },
-                    onCompress = { onEvent(BrowserEvent.RequestCompress(selected)) },
-                    onExtract = { onEvent(BrowserEvent.Extract(selected)) },
-                    canExtract = selected.all { !it.isDirectory && !ArchivePaths.isArchivePath(it.path) && ArchiveFormat.of(it.name) != null },
+                    onSelectAll = { onEvent(BrowserEvent.SelectAll) },
                     windowInsets = topInsets,
                 )
             } else {
                 BrowserTopBar(
                     segments = state.breadcrumb,
+                    volumeName = state.volume?.label,
+                    freeBytes = state.volume?.freeBytes,
                     sortOrder = state.sortOrder,
                     viewMode = state.viewMode,
                     onToggleViewMode = { onEvent(BrowserEvent.ToggleViewMode) },
@@ -198,6 +202,7 @@ fun BrowserScreen(
                     onSearchQueryChange = { onEvent(BrowserEvent.SetSearchQuery(it)) },
                     onNewFolder = { onEvent(BrowserEvent.RequestNewFolder) },
                     onNewFile = { onEvent(BrowserEvent.RequestNewFile) },
+                    canCreate = !state.isCategory,
                     onSortSelected = { onEvent(BrowserEvent.SortBy(it)) },
                     onSelectAll = { onEvent(BrowserEvent.SelectAll) },
                     onAnalyze = state.currentPath?.takeIf { onAnalyze != null && SizeAnalyzer.supports(it) }?.let { path ->
@@ -208,11 +213,27 @@ fun BrowserScreen(
             }
         },
         bottomBar = {
-            DockedPasteBar(
-                clipboard = clipboard,
-                onPaste = { onEvent(BrowserEvent.Paste) },
-                onCancel = { onEvent(BrowserEvent.CancelClipboard) },
-            )
+            if (state.isSelecting) {
+                val selected = state.selectedItems
+                SelectionDockBar(
+                    selectedCount = selected.size,
+                    onCopy = { onEvent(BrowserEvent.Copy(selected)) },
+                    onCut = { onEvent(BrowserEvent.Cut(selected)) },
+                    onDelete = { onEvent(BrowserEvent.RequestDelete(selected)) },
+                    onShare = { onEvent(BrowserEvent.Share(selected)) },
+                    onRename = { selected.singleOrNull()?.let { onEvent(BrowserEvent.RequestRename(it)) } },
+                    onProperties = { selected.singleOrNull()?.let { onEvent(BrowserEvent.ShowProperties(it)) } },
+                    onCompress = { onEvent(BrowserEvent.RequestCompress(selected)) },
+                    onExtract = { onEvent(BrowserEvent.Extract(selected)) },
+                    canExtract = selected.all { !it.isDirectory && !ArchivePaths.isArchivePath(it.path) && ArchiveFormat.of(it.name) != null },
+                )
+            } else {
+                DockedPasteBar(
+                    clipboard = clipboard.takeUnless { state.isCategory },
+                    onPaste = { onEvent(BrowserEvent.Paste) },
+                    onCancel = { onEvent(BrowserEvent.CancelClipboard) },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbar) { data -> ConnectionAwareSnackbar(data, onEditAccount) } },
     ) { padding ->
@@ -239,24 +260,34 @@ fun BrowserScreen(
                         )
                     }
                 }
-                else -> FileList(
-                    items = state.visibleItems,
-                    viewMode = state.viewMode,
-                    selectedPaths = state.selectedPaths,
-                    isSelecting = state.isSelecting,
-                    dragAndDropEnabled = dragAndDropEnabled,
-                    onItemClick = { onEvent(BrowserEvent.OpenItem(it)) },
-                    onToggleSelection = { onEvent(BrowserEvent.ToggleSelection(it)) },
-                    onAction = { action, item -> onEvent(action.toEvent(item)) },
-                    onDragStart = { onEvent(BrowserEvent.StartDrag(it)) },
-                    onDropInside = { onEvent(BrowserEvent.DropItems(it)) },
-                    contentPadding = if (clipboard == null && !consumeNavigationBar) {
-                        dockBottomInsets.asPaddingValues()
-                    } else {
-                        PaddingValues()
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
+                else -> Column(Modifier.fillMaxSize()) {
+                    ListHeader(
+                        count = state.visibleItems.size,
+                        sortOrder = state.sortOrder,
+                        sortable = state.isSortable,
+                        onSortSelected = { onEvent(BrowserEvent.SortBy(it)) },
+                    )
+                    FileList(
+                        items = state.visibleItems,
+                        folderCounts = state.folderCounts,
+                        favoritePaths = state.favoritePaths,
+                        viewMode = state.viewMode,
+                        selectedPaths = state.selectedPaths,
+                        isSelecting = state.isSelecting,
+                        dragAndDropEnabled = dragAndDropEnabled,
+                        onItemClick = { onEvent(BrowserEvent.OpenItem(it)) },
+                        onToggleSelection = { onEvent(BrowserEvent.ToggleSelection(it)) },
+                        onAction = { action, item -> onEvent(action.toEvent(item)) },
+                        onDragStart = { onEvent(BrowserEvent.StartDrag(it)) },
+                        onDropInside = { onEvent(BrowserEvent.DropItems(it)) },
+                        contentPadding = if ((clipboard == null || state.isCategory) && !state.isSelecting && !consumeNavigationBar) {
+                            dockBottomInsets.asPaddingValues()
+                        } else {
+                            PaddingValues()
+                        },
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                    )
+                }
             }
         }
     }
@@ -292,6 +323,18 @@ fun BrowserScreen(
             onConfirm = { onEvent(BrowserEvent.ConfirmDelete) },
             onDismiss = { onEvent(BrowserEvent.DismissDialog) },
         )
+        is BrowserDialog.InstallPermission -> InstallPermissionDialog(
+            fileName = dialog.item.name,
+            onConfirm = {
+                onEvent(BrowserEvent.ConfirmInstallPermission)
+                try {
+                    installSettings.launch(intents.installPermissionSettings())
+                } catch (e: ActivityNotFoundException) {
+                    scope.launch { snackbar.showSnackbar(resources.getString(R.string.error_no_app)) }
+                }
+            },
+            onDismiss = { onEvent(BrowserEvent.DismissDialog) },
+        )
         is BrowserDialog.Properties -> PropertiesBottomSheet(
             item = dialog.item,
             hashState = dialog.hash,
@@ -324,4 +367,5 @@ private fun FileItemAction.toEvent(item: FileItem): BrowserEvent = when (this) {
     FileItemAction.RENAME -> BrowserEvent.RequestRename(item)
     FileItemAction.DELETE -> BrowserEvent.RequestDelete(listOf(item))
     FileItemAction.PROPERTIES -> BrowserEvent.ShowProperties(item)
+    FileItemAction.FAVORITE, FileItemAction.UNFAVORITE -> BrowserEvent.ToggleFavorite(item)
 }

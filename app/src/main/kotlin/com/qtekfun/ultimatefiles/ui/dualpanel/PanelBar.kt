@@ -12,16 +12,15 @@ import com.qtekfun.ultimatefiles.ui.components.dockBottomInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.VerticalSplit
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,7 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,10 +39,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.qtekfun.ultimatefiles.R
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
 import com.qtekfun.ultimatefiles.core.model.PanelId
+import com.qtekfun.ultimatefiles.ui.theme.LocalTopBarColors
+import com.qtekfun.ultimatefiles.ui.theme.TopBarColors
 
 /** Name shown for a panel: the folder it is in, or "Panel N" while it has not loaded one yet. */
 @Composable
-private fun PanelEntry.folderName(index: Int): String {
+internal fun PanelEntry.folderName(index: Int): String {
     val state by viewModel.state.collectAsStateWithLifecycle()
     return state.breadcrumb.lastOrNull()?.label ?: stringResource(R.string.panel_tab_format, index + 1)
 }
@@ -68,13 +69,13 @@ fun PanelBar(
 ) {
     val atTop = position == PanelBarPosition.TOP
     var expanded by remember { mutableStateOf(false) }
-    Surface(tonalElevation = 2.dp, modifier = modifier.fillMaxWidth()) {
+    val colors = panelBarColors(position)
+    Surface(color = colors.container, contentColor = colors.content, modifier = modifier.fillMaxWidth()) {
         Box {
             Row(
                 modifier = Modifier
                     .then(if (atTop) Modifier.statusBarsPadding() else Modifier.windowInsetsPadding(dockBottomInsets))
-                    .heightIn(min = 48.dp)
-                    .alpha(if (isActive) 1f else 0.65f),
+                    .heightIn(min = 48.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.weight(1f)) {
@@ -89,6 +90,7 @@ fun PanelBar(
                         Text(
                             text = panels[shownIndex].folderName(shownIndex),
                             style = MaterialTheme.typography.titleSmall,
+                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false),
@@ -96,7 +98,6 @@ fun PanelBar(
                         Text(
                             text = stringResource(R.string.panel_position_format, shownIndex + 1, panels.size),
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 8.dp),
                         )
                         Icon(Icons.Filled.ArrowDropDown, contentDescription = stringResource(R.string.panel_select))
@@ -141,7 +142,7 @@ fun PanelBar(
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.panel_new)) },
-                            leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Filled.VerticalSplit, contentDescription = null) },
                             onClick = {
                                 expanded = false
                                 onAdd()
@@ -158,9 +159,6 @@ fun PanelBar(
                         )
                     }
                 }
-                IconButton(onClick = onAdd) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.panel_add))
-                }
             }
             if (isActive) {
                 Box(
@@ -168,11 +166,20 @@ fun PanelBar(
                         .align(if (atTop) Alignment.BottomCenter else Alignment.TopCenter)
                         .fillMaxWidth()
                         .height(3.dp)
-                        .background(MaterialTheme.colorScheme.primary),
+                        .background(colors.indicator),
                 )
             }
         }
     }
 }
+
+/** At the top the bar is part of the header; docked at the bottom it stays neutral. */
+@Composable
+internal fun panelBarColors(position: PanelBarPosition): TopBarColors =
+    if (position == PanelBarPosition.TOP) {
+        LocalTopBarColors.current
+    } else {
+        MaterialTheme.colorScheme.run { TopBarColors(surfaceContainerHighest, onSurface, surfaceContainerHigh, primary) }
+    }
 
 const val MIN_PANELS = 2

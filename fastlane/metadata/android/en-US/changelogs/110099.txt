@@ -1,0 +1,5 @@
+- New look with cyan accent, coloured top bar, panel tabs and richer lists
+- Side menu with storage cards, favourites, categories and recent files
+- Text editor, better PDF, image, audio and video viewers, "Open as"
+- The panel "+" button is gone; "New folder" is in the top bar
+- Settings shows the permission to install APKs

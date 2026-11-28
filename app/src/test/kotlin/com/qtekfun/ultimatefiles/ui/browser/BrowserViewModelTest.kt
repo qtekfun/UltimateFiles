@@ -1,5 +1,8 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import com.qtekfun.ultimatefiles.core.model.Favorite
+import com.qtekfun.ultimatefiles.R
+import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.FileItem
 import com.qtekfun.ultimatefiles.core.model.OperationType
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
@@ -68,6 +71,11 @@ class BrowserViewModelTest {
         override suspend fun setPanelBarPosition(position: PanelBarPosition) = flow.update { it.copy(panelBarPosition = position) }
 
         override suspend fun setThemeMode(mode: ThemeMode) = flow.update { it.copy(themeMode = mode) }
+        override suspend fun setAccentColor(accent: AccentColor) = flow.update { it.copy(accentColor = accent) }
+        override suspend fun setFavorite(favorite: Favorite, on: Boolean) = flow.update { prefs ->
+            prefs.copy(favorites = prefs.favorites.filterNot { it.path == favorite.path } + listOfNotNull(favorite.takeIf { on }))
+        }
+
         override suspend fun setDynamicColor(enabled: Boolean) = flow.update { it.copy(dynamicColor = enabled) }
         override suspend fun setVerifyCopies(enabled: Boolean) = flow.update { it.copy(verifyCopies = enabled) }
         override suspend fun setThumbnailsOnNetwork(enabled: Boolean) = flow.update { it.copy(thumbnailsOnNetwork = enabled) }
@@ -228,6 +236,29 @@ class BrowserViewModelTest {
     }
 
     @Test
+    fun `folders are given their entry count after the listing`() = runTest {
+        tmp.root.resolve("full").mkdirs()
+        tmp.root.resolve("full/one.txt").writeText("1")
+        loaded()
+        viewModel.onEvent(BrowserEvent.Refresh)
+
+        val state = viewModel.state.first { s -> s.folderCounts.keys.any { it.endsWith("full") } }
+        assertEquals(1, state.folderCounts.entries.single { it.key.endsWith("full") }.value)
+    }
+
+    @Test
+    fun `favorites are added and removed from the item menu`() = runTest {
+        val file = loaded().items.first { it.name == "b.txt" }
+
+        viewModel.onEvent(BrowserEvent.ToggleFavorite(file))
+        viewModel.state.first { file.path in it.favoritePaths }
+        assertEquals(listOf(Favorite(file.path, "b.txt", false)), prefs.flow.value.favorites)
+
+        viewModel.onEvent(BrowserEvent.ToggleFavorite(file))
+        viewModel.state.first { it.favoritePaths.isEmpty() }
+    }
+
+    @Test
     fun `new folder dialog creates the folder`() = runTest {
         loaded()
 
@@ -238,6 +269,30 @@ class BrowserViewModelTest {
         val state = viewModel.state.first { s -> s.items.any { it.name == "created" } }
         assertNull(state.dialog)
         assertTrue(tmp.root.resolve("created").isDirectory)
+    }
+
+    @Test
+    fun `granting the install permission opens the waiting file`() = runTest {
+        val file = loaded().items.first { it.name == "b.txt" }
+
+        viewModel.onEvent(BrowserEvent.RequestInstallPermission(file, chooser = true))
+        assertEquals(BrowserDialog.InstallPermission(file, true), viewModel.state.value.dialog)
+        viewModel.onEvent(BrowserEvent.ConfirmInstallPermission)
+        assertNull(viewModel.state.value.dialog)
+        viewModel.onEvent(BrowserEvent.InstallPermissionResult(granted = true))
+
+        assertEquals(BrowserEffect.OpenFile(file, true), viewModel.effects.first())
+    }
+
+    @Test
+    fun `coming back without the install permission only says so`() = runTest {
+        val file = loaded().items.first { it.name == "b.txt" }
+
+        viewModel.onEvent(BrowserEvent.RequestInstallPermission(file, chooser = false))
+        viewModel.onEvent(BrowserEvent.ConfirmInstallPermission)
+        viewModel.onEvent(BrowserEvent.InstallPermissionResult(granted = false))
+
+        assertEquals(BrowserEffect.Message(R.string.install_permission_denied), viewModel.effects.first())
     }
 
     @Test

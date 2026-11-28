@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">UltimateFiles</string>
     <string name="panel_tab_format">Panel %1$d</string>
-    <string name="panel_add">Añadir panel</string>
     <string name="panel_close">Cerrar panel</string>
     <string name="storage_internal">Almacenamiento interno</string>
     <string name="transfer_channel_name">Transferencias de archivos</string>
@@ -88,7 +87,15 @@
     <string name="drop_copy">Copiar</string>
     <string name="drop_move">Mover</string>
     <string name="transfer_speed">%1$s/s</string>
-    <string name="install_permission_needed">Permite a UltimateFiles instalar apps en esta pantalla y abre el APK de nuevo.</string>
+    <string name="install_permission_title">Permitir instalar apps</string>
+    <string name="install_permission_needed">Para instalar %1$s, Android tiene que permitir que UltimateFiles instale apps. Activa el interruptor en la siguiente pantalla y vuelve.</string>
+    <string name="install_permission_open_settings">Abrir ajustes</string>
+    <string name="install_permission_denied">No está permitido instalar apps, así que no se ha abierto el APK.</string>
+    <string name="check_install_apps">Instalar apps</string>
+    <string name="permission_granted">Concedido</string>
+    <string name="permission_not_granted">No concedido</string>
+    <string name="permission_change">Cambiar</string>
+    <string name="permission_allow">Permitir</string>
     <string name="incoming_failed">No se pudo abrir el archivo comprimido: %1$s</string>
     <string name="error_archive_open">Copia el archivo fuera del comprimido para abrirlo.</string>
     <string name="error_open_failed">No se pudo abrir el archivo: %1$s</string>
@@ -216,7 +223,6 @@
     <string name="check_all_ok">Todo en orden.</string>
     <string name="viewer_unsupported">Este archivo no se puede mostrar aquí.</string>
     <string name="viewer_error">No se puede mostrar este archivo</string>
-    <string name="viewer_truncated">Se muestra solo el primer megabyte.</string>
     <string name="settings_backup">Copia de seguridad</string>
     <string name="settings_export">Exportar ajustes y cuentas</string>
     <string name="settings_export_summary">Guarda tus ajustes y cuentas de Nextcloud en un archivo</string>
@@ -320,4 +326,25 @@
     <string name="connection_edit_account">Editar cuenta</string>
     <string name="account_error_offline">Sin conexión de red.</string>
     <string name="account_error_no_response">El servidor no respondió. Comprueba la dirección y el puerto.</string>
+    <string name="browser_space_free">%1$s libres</string>
+    <string name="panel_menu">Paneles</string>
+    <string name="settings_accent">Color de acento</string>
+    <string name="accent_cyan">Cian</string>
+    <string name="accent_blue">Azul</string>
+    <string name="accent_purple">Morado</string>
+    <string name="accent_slate">Pizarra</string>
+    <plurals name="item_count">
+        <item quantity="one">%d elemento</item>
+        <item quantity="other">%d elementos</item>
+    </plurals>
+    <string name="action_add_favorite">Añadir a favoritos</string>
+    <string name="action_remove_favorite">Quitar de favoritos</string>
+    <string name="drawer_favorites">Favoritos</string>
+    <string name="category_images">Imágenes</string>
+    <string name="category_video">Vídeos</string>
+    <string name="category_audio">Audio</string>
+    <string name="category_documents">Documentos</string>
+    <string name="category_apks">APK</string>
+    <string name="category_recents">Recientes</string>
+    <string name="error_category_read_only">No es posible aquí: estos archivos vienen de varias carpetas.</string>
 </resources>

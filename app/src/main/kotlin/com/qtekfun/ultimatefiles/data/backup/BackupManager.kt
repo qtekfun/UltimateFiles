@@ -1,5 +1,6 @@
 package com.qtekfun.ultimatefiles.data.backup
 
+import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.SortField
 import com.qtekfun.ultimatefiles.core.model.SortOrder
 import com.qtekfun.ultimatefiles.core.model.ThemeMode
@@ -55,6 +56,7 @@ class BackupManager(
                 JSONObject()
                     .put("themeMode", prefs.themeMode.name)
                     .put("dynamicColor", prefs.dynamicColor)
+                    .put("accentColor", prefs.accentColor.name)
                     .put("verifyCopies", prefs.verifyCopies)
                     .put("viewMode", prefs.viewMode.name)
                     .put("sortField", prefs.sortOrder.field.name)
@@ -101,6 +103,7 @@ class BackupManager(
         root.optJSONObject("settings")?.let { s ->
             enumOrNull<ThemeMode>(s.optString("themeMode"))?.let { preferences.setThemeMode(it) }
             if (s.has("dynamicColor")) preferences.setDynamicColor(s.getBoolean("dynamicColor"))
+            enumOrNull<AccentColor>(s.optString("accentColor"))?.let { preferences.setAccentColor(it) }
             if (s.has("verifyCopies")) preferences.setVerifyCopies(s.getBoolean("verifyCopies"))
             enumOrNull<ViewMode>(s.optString("viewMode"))?.let { preferences.setViewMode(it) }
             enumOrNull<SortField>(s.optString("sortField"))?.let { field ->

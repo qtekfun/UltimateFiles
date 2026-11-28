@@ -1,0 +1,5 @@
+- Nuevo aspecto en cian: barra con color, pestañas de paneles y listas más ricas
+- Menú lateral con tarjetas de almacenamiento, favoritos, categorías y recientes
+- Editor de texto, mejores visores de PDF, imágenes, audio y vídeo, y "Abrir como"
+- Desaparece el "+" de paneles; "Nueva carpeta" está en la barra superior
+- Ajustes muestra el permiso para instalar APK

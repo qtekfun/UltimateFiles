@@ -1,5 +1,7 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import com.qtekfun.ultimatefiles.domain.usecase.Category
+import com.qtekfun.ultimatefiles.domain.usecase.CategoryPaths
 import androidx.annotation.StringRes
 import com.qtekfun.ultimatefiles.core.model.BreadcrumbSegment
 import com.qtekfun.ultimatefiles.core.model.ConnectionProblem
@@ -7,12 +9,18 @@ import com.qtekfun.ultimatefiles.core.model.FileItem
 import com.qtekfun.ultimatefiles.core.model.HashState
 import com.qtekfun.ultimatefiles.core.model.SortField
 import com.qtekfun.ultimatefiles.core.model.SortOrder
+import com.qtekfun.ultimatefiles.core.model.StorageVolume
 import com.qtekfun.ultimatefiles.core.model.ViewMode
 
 data class BrowserState(
     val currentPath: String? = null,
     val parentPath: String? = null,
     val breadcrumb: List<BreadcrumbSegment> = emptyList(),
+    /** The volume the current folder is on, for its name and free space; null until read or when there is none. */
+    val volume: StorageVolume? = null,
+    /** Entries inside each listed folder, by path, filled after the listing where it is cheap to know. */
+    val folderCounts: Map<String, Int> = emptyMap(),
+    val favoritePaths: Set<String> = emptySet(),
     val items: List<FileItem> = emptyList(),
     val selectedPaths: Set<String> = emptySet(),
     val isLoading: Boolean = true,
@@ -26,6 +34,11 @@ data class BrowserState(
     val visibleItems: List<FileItem>
         get() = searchQuery?.takeIf { it.isNotBlank() }
             ?.let { query -> items.filter { it.name.contains(query.trim(), ignoreCase = true) } } ?: items
+    /** A category gathers files from many places: nothing can be created, pasted or packed in it. */
+    val isCategory: Boolean get() = currentPath?.let(CategoryPaths::isCategoryPath) == true
+
+    /** The recent files are about when, so they stay newest first whatever order folders are in. */
+    val isSortable: Boolean get() = currentPath != CategoryPaths.pathOf(Category.RECENTS)
     val selectedItems: List<FileItem> get() = items.filter { it.path in selectedPaths }
     val isSelecting: Boolean get() = selectedPaths.isNotEmpty()
 }
@@ -37,6 +50,9 @@ sealed interface BrowserDialog {
     data class ConfirmDelete(val items: List<FileItem>) : BrowserDialog
     data class Compress(val items: List<FileItem>) : BrowserDialog
     data class Properties(val item: FileItem, val hash: HashState = HashState.Idle) : BrowserDialog
+
+    /** Explains why installing needs a system permission, before leaving for the settings to grant it. */
+    data class InstallPermission(val item: FileItem, val chooser: Boolean) : BrowserDialog
 }
 
 /** Everything the screen can ask the view model to do. */
@@ -69,6 +85,14 @@ sealed interface BrowserEvent {
     data object ConfirmDelete : BrowserEvent
     data object ComputeHash : BrowserEvent
     data object DismissDialog : BrowserEvent
+
+    /** [item] cannot be opened until the user allows installing apps from here. */
+    data class RequestInstallPermission(val item: FileItem, val chooser: Boolean) : BrowserEvent
+    data object ConfirmInstallPermission : BrowserEvent
+
+    /** The user came back from the system settings. */
+    data class InstallPermissionResult(val granted: Boolean) : BrowserEvent
+    data class ToggleFavorite(val item: FileItem) : BrowserEvent
     data class StartDrag(val item: FileItem) : BrowserEvent
     data class DropItems(val targetPath: String) : BrowserEvent
 

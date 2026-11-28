@@ -32,7 +32,7 @@ fun isSplitLayout(widthDp: Int): Boolean = widthDp >= SPLIT_MIN_WIDTH_DP
 data class PanelEntry(val id: PanelId, val viewModel: BrowserViewModel)
 
 /**
- * Compact widths (portrait phones): one panel at a time, swiped through like pages. Wider windows
+ * Compact widths (portrait phones): one panel at a time, swiped through like pages, with [PanelTabs]. Wider windows
  * (landscape, tablets): two fixed slots, each with its own [PanelBar] to choose which of the open
  * panels it shows; this is also where drag and drop between panels works.
  */
@@ -148,12 +148,10 @@ private fun PagedPanels(
         panels.getOrNull(pagerState.settledPage)?.let { onActivePanelChange(it.id) }
     }
     val bar = @Composable {
-        PanelBar(
+        PanelTabs(
             panels = panels,
-            shownIndex = activeIndex,
-            isActive = true,
+            activeIndex = activeIndex,
             position = barPosition,
-            otherShown = null,
             onSelect = onActivePanelChange,
             onAdd = onAddPanel,
             onClose = { onClosePanel(panels[activeIndex].id) },

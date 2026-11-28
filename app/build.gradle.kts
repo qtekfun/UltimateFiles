@@ -23,7 +23,11 @@ val signingKeystore: String? = System.getenv("UF_KEYSTORE_FILE")
 
 android {
     namespace = "com.qtekfun.ultimatefiles"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 1
+        }
+    }
 
     defaultConfig {
         applicationId = "com.qtekfun.ultimatefiles"
@@ -109,6 +113,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.documentfile)
+    implementation(libs.androidx.media3.exoplayer) // audio and video player; no Google Play Services
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)

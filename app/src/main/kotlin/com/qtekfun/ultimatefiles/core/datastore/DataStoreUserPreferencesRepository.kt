@@ -1,10 +1,12 @@
 package com.qtekfun.ultimatefiles.core.datastore
 
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.qtekfun.ultimatefiles.core.model.AccentColor
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
 import com.qtekfun.ultimatefiles.core.model.PanelId
 import com.qtekfun.ultimatefiles.core.model.SortField
@@ -30,7 +32,9 @@ class DataStoreUserPreferencesRepository(private val store: DataStore<Preference
             lastDirectoryPaths = panelIds.associateWith { prefs[lastPathKey(it)] },
             panelBarPosition = prefs[PANEL_BAR_POSITION]?.let { runCatching { PanelBarPosition.valueOf(it) }.getOrNull() } ?: PanelBarPosition.TOP,
             themeMode = prefs[THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
-            dynamicColor = prefs[DYNAMIC_COLOR] ?: true,
+            dynamicColor = prefs[DYNAMIC_COLOR] ?: false,
+            accentColor = prefs[ACCENT_COLOR]?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() } ?: AccentColor.CYAN,
+            favorites = readFavorites(prefs),
             verifyCopies = prefs[VERIFY_COPIES] ?: false,
             thumbnailsOnNetwork = prefs[THUMBNAILS_ON_NETWORK] ?: false,
         )
@@ -70,6 +74,17 @@ class DataStoreUserPreferencesRepository(private val store: DataStore<Preference
         store.edit { it[DYNAMIC_COLOR] = enabled }
     }
 
+    override suspend fun setAccentColor(accent: AccentColor) {
+        store.edit { it[ACCENT_COLOR] = accent.name }
+    }
+
+    override suspend fun setFavorite(favorite: Favorite, on: Boolean) {
+        store.edit { prefs ->
+            val others = readFavorites(prefs).filterNot { it.path == favorite.path }
+            prefs[FAVORITES] = FavoriteCodec.encode(if (on) others + favorite else others)
+        }
+    }
+
     override suspend fun setVerifyCopies(enabled: Boolean) {
         store.edit { it[VERIFY_COPIES] = enabled }
     }
@@ -85,9 +100,14 @@ class DataStoreUserPreferencesRepository(private val store: DataStore<Preference
         val VERIFY_COPIES = booleanPreferencesKey("verify_copies")
         val THUMBNAILS_ON_NETWORK = booleanPreferencesKey("thumbnails_on_network")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+        val ACCENT_COLOR = stringPreferencesKey("accent_color")
         val SORT_ASCENDING = booleanPreferencesKey("sort_ascending")
         val PANEL_IDS = stringPreferencesKey("panel_ids")
         val PANEL_BAR_POSITION = stringPreferencesKey("panel_bar_position")
+
+        val FAVORITES = stringPreferencesKey("favorites")
+
+        fun readFavorites(prefs: Preferences): List<Favorite> = prefs[FAVORITES]?.let(FavoriteCodec::decode).orEmpty()
 
         /** The first two panels keep the keys of the original left/right panels. */
         fun lastPathKey(panel: PanelId) = stringPreferencesKey(

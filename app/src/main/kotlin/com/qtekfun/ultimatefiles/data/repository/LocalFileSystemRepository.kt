@@ -8,10 +8,12 @@ import com.qtekfun.ultimatefiles.domain.repository.FileSystemRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 
 /** Path-based backend for the device's shared storage (needs all-files access on Android 11+). */
@@ -51,6 +53,8 @@ class LocalFileSystemRepository(
         if (!file.exists()) throw IOException("Not found: $uriOrPath")
         toItem(file).copy(permissions = posixPermissions(file))
     }
+
+    override suspend fun childCount(uriOrPath: String): Int? = withContext(Dispatchers.IO) { File(uriOrPath).list()?.size }
 
     override suspend fun parentOf(uriOrPath: String): String? {
         if (uriOrPath == root.path || extraVolumes().any { it.rootPath == uriOrPath }) return null
@@ -103,6 +107,24 @@ class LocalFileSystemRepository(
         if (file.isDirectory) throw IOException("$name is a directory")
         if (file.exists() && !overwrite) throw IOException("Already exists: $name")
         file.outputStream()
+    }
+
+    /** Written beside the target and renamed over it, so the original stays whole until the new content is on disk. */
+    override suspend fun replaceContent(item: FileItem, bytes: ByteArray): Result<Unit> = ioResult {
+        val target = File(item.path).canonicalFile
+        if (!target.isFile || !target.canWrite()) throw IOException("Cannot write ${item.name}")
+        val temp = File.createTempFile(".uf-save-", ".tmp", target.parentFile)
+        try {
+            FileOutputStream(temp).use {
+                it.write(bytes)
+                it.fd.sync()
+            }
+            // Not every file system has POSIX permissions; the save is still valid without them.
+            runCatching { Files.setPosixFilePermissions(temp.toPath(), Files.getPosixFilePermissions(target.toPath())) }
+            Files.move(temp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        } finally {
+            temp.delete()
+        }
     }
 
     /** Null where the file system has no POSIX attributes (some shared-storage mounts). */

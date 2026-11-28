@@ -14,6 +14,11 @@ enum class ViewerKind {
             "html", "htm", "css", "js", "ts", "kt", "kts", "java", "py", "sh", "c", "h", "cpp", "rs", "go", "gradle", "sql",
         )
 
+        /** True when nothing says what the file is, so the user is asked how to open it. */
+        fun isUnknown(name: String, mime: String?): Boolean =
+            of(name, mime) == null && (mime == null || mime.equals("application/octet-stream", ignoreCase = true)) &&
+                name.substringAfterLast('.', "").lowercase() != "svg"
+
         /** [mime] may be null or generic; the file extension then decides. */
         fun of(name: String, mime: String?): ViewerKind? {
             val extension = name.substringAfterLast('.', "").lowercase()

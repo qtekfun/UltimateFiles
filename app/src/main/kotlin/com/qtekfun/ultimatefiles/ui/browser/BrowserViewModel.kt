@@ -1,5 +1,8 @@
 package com.qtekfun.ultimatefiles.ui.browser
 
+import com.qtekfun.ultimatefiles.domain.usecase.Category
+import com.qtekfun.ultimatefiles.domain.usecase.CategoryPaths
+import com.qtekfun.ultimatefiles.core.model.Favorite
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qtekfun.ultimatefiles.R
@@ -94,9 +97,14 @@ class BrowserViewModel(
             }
         }
         viewModelScope.launch {
+            preferences.preferences.map { prefs -> prefs.favorites.map { it.path }.toSet() }.distinctUntilChanged().collect { paths ->
+                _state.update { it.copy(favoritePaths = paths) }
+            }
+        }
+        viewModelScope.launch {
             // Both panels follow the shared sort preference.
             preferences.preferences.map { it.sortOrder }.distinctUntilChanged().collect { order ->
-                _state.update { it.copy(sortOrder = order, items = it.items.sortedByOrder(order)) }
+                _state.update { it.copy(sortOrder = order, items = ordered(it.currentPath, it.items, order)) }
             }
         }
         viewModelScope.launch {
@@ -118,6 +126,11 @@ class BrowserViewModel(
         }
     }
 
+    private var countJob: Job? = null
+
+    /** The APK to open once the user comes back from allowing installs. */
+    private var pendingInstall: BrowserEffect.OpenFile? = null
+
     fun onEvent(event: BrowserEvent) {
         when (event) {
             is BrowserEvent.Navigate -> load(event.path)
@@ -135,7 +148,8 @@ class BrowserViewModel(
                 ArchiveFormat.of(event.item.name) != null -> load(ArchivePaths.rootOf(event.item.path))
                 ArchivePaths.isArchivePath(event.item.path) -> emit(BrowserEffect.Message(R.string.error_archive_open))
                 event.item.isRemote() -> emit(BrowserEffect.Message(R.string.error_remote_open))
-                ViewerKind.of(event.item.name, event.item.mimeType) != null -> emit(BrowserEffect.OpenViewer(event.item))
+                ViewerKind.of(event.item.name, event.item.mimeType) != null ||
+                    ViewerKind.isUnknown(event.item.name, event.item.mimeType ?: MimeTypes.fromName(event.item.name)) -> emit(BrowserEffect.OpenViewer(event.item))
                 else -> emit(BrowserEffect.OpenFile(event.item, false))
             }
             is BrowserEvent.OpenWith ->
@@ -152,22 +166,31 @@ class BrowserViewModel(
                 clipboardManager.cut(_state.value.currentPath.orEmpty(), event.items)
                 clearSelection()
             }
-            BrowserEvent.Paste -> paste()
+            BrowserEvent.Paste -> unlessCategory { paste() }
             BrowserEvent.CancelClipboard -> clipboardManager.clear()
             is BrowserEvent.Share -> share(event.items)
             is BrowserEvent.RequestDelete -> showDialog(BrowserDialog.ConfirmDelete(event.items))
             is BrowserEvent.RequestRename -> showDialog(BrowserDialog.Rename(event.item))
-            BrowserEvent.RequestNewFolder -> showDialog(BrowserDialog.NewFolder)
-            is BrowserEvent.RequestCompress -> showDialog(BrowserDialog.Compress(event.items))
-            is BrowserEvent.Extract -> archive(OperationType.EXTRACT, event.items, null)
-            BrowserEvent.RequestNewFile -> showDialog(BrowserDialog.NewFile)
+            BrowserEvent.RequestNewFolder -> unlessCategory { showDialog(BrowserDialog.NewFolder) }
+            is BrowserEvent.RequestCompress -> unlessCategory { showDialog(BrowserDialog.Compress(event.items)) }
+            is BrowserEvent.Extract -> unlessCategory { archive(OperationType.EXTRACT, event.items, null) }
+            BrowserEvent.RequestNewFile -> unlessCategory { showDialog(BrowserDialog.NewFile) }
             is BrowserEvent.ShowProperties -> showProperties(event.item)
             is BrowserEvent.ConfirmName -> confirmName(event.name)
             BrowserEvent.ConfirmDelete -> confirmDelete()
             BrowserEvent.ComputeHash -> computeHash()
             BrowserEvent.DismissDialog -> dismissDialog()
+            is BrowserEvent.RequestInstallPermission -> showDialog(BrowserDialog.InstallPermission(event.item, event.chooser))
+            BrowserEvent.ConfirmInstallPermission -> confirmInstallPermission()
+            is BrowserEvent.InstallPermissionResult -> onInstallPermissionResult(event.granted)
+            is BrowserEvent.ToggleFavorite -> toggleFavorite(event.item)
             is BrowserEvent.StartDrag -> startDrag(event.item)
-            is BrowserEvent.DropItems -> dragDrop.requestDrop(event.targetPath)
+            is BrowserEvent.DropItems ->
+                if (CategoryPaths.isCategoryPath(event.targetPath)) {
+                    emit(BrowserEffect.Message(R.string.error_category_read_only))
+                } else {
+                    dragDrop.requestDrop(event.targetPath)
+                }
         }
     }
 
@@ -236,7 +259,7 @@ class BrowserViewModel(
                     val parent = repository.parentOf(path)
                     _state.update { s ->
                         val sameFolder = s.currentPath == path
-                        val sorted = files.sortedByOrder(s.sortOrder)
+                        val sorted = ordered(path, files, s.sortOrder)
                         s.copy(
                             currentPath = path,
                             parentPath = parent,
@@ -248,8 +271,12 @@ class BrowserViewModel(
                             errorMessage = null,
                         )
                     }
+                    countFolderEntries(path, files)
                     preferences.setLastDirectory(panel, path)
                     RemoteAccounts.idOf(path)?.let(health::clear)
+                    // Read on every listing, so the free space follows what was just copied or deleted.
+                    val volume = repository.volumes().firstOrNull { it.rootPath == breadcrumb.firstOrNull()?.path }
+                    _state.update { it.copy(volume = volume) }
                 },
                 onFailure = { error ->
                     if (error is CancellationException) throw error
@@ -264,6 +291,24 @@ class BrowserViewModel(
                 },
             )
         }
+    }
+
+    /** Apart from the listing, so that names show at once and a folder with many subfolders does not delay them. */
+    private fun countFolderEntries(path: String, files: List<FileItem>) {
+        countJob?.cancel()
+        countJob = viewModelScope.launch {
+            val counts = mutableMapOf<String, Int>()
+            for (folder in files.filter { it.isDirectory }.take(MAX_COUNTED_FOLDERS)) {
+                // A backend that cannot tell cheaply answers null at once.
+                repository.childCount(folder.path)?.let { counts[folder.path] = it }
+            }
+            _state.update { if (it.currentPath == path) it.copy(folderCounts = counts) else it }
+        }
+    }
+
+    private fun toggleFavorite(item: FileItem) {
+        val add = item.path !in _state.value.favoritePaths
+        viewModelScope.launch { preferences.setFavorite(Favorite(item.path, item.name, item.isDirectory), add) }
     }
 
     private fun toggleSelection(item: FileItem) = _state.update { s ->
@@ -323,6 +368,19 @@ class BrowserViewModel(
         }
     }
 
+    private fun confirmInstallPermission() {
+        val dialog = _state.value.dialog as? BrowserDialog.InstallPermission ?: return
+        pendingInstall = BrowserEffect.OpenFile(dialog.item, dialog.chooser)
+        _state.update { it.copy(dialog = null) }
+    }
+
+    /** Carries on with the APK that was waiting, so the user does not have to tap it again. */
+    private fun onInstallPermissionResult(granted: Boolean) {
+        val pending = pendingInstall ?: return
+        pendingInstall = null
+        emit(if (granted) pending else BrowserEffect.Message(R.string.install_permission_denied))
+    }
+
     private fun dismissDialog() {
         hashJob?.cancel()
         _state.update { it.copy(dialog = null) }
@@ -349,6 +407,18 @@ class BrowserViewModel(
             refresh()
         }
     }
+
+    /** Runs [action], which writes into the current folder, only where there is one to write into. */
+    private fun unlessCategory(action: () -> Unit) {
+        if (_state.value.isCategory) emit(BrowserEffect.Message(R.string.error_category_read_only)) else action()
+    }
+
+    private fun ordered(path: String?, files: List<FileItem>, order: SortOrder): List<FileItem> =
+        if (path == CategoryPaths.pathOf(Category.RECENTS)) {
+            files.sortedByDescending { it.lastModifiedMillis }
+        } else {
+            files.sortedByOrder(order)
+        }
 
     /** Queues packing [items] into a ZIP called [archiveName], or unpacking each of them, in the current folder. */
     private fun archive(operation: OperationType, items: List<FileItem>, archiveName: String?) {
@@ -420,6 +490,8 @@ class BrowserViewModel(
     companion object {
         /** Time the system needs to finish mounting or unmounting before the volumes are re-read. */
         private const val VOLUME_SETTLE_MILLIS = 500L
+
+        private const val MAX_COUNTED_FOLDERS = 500
 
         /** A failure that repeats within this time of the same one (the fallback reloads the folder) is not announced twice. */
         const val NOTICE_REPEAT_MILLIS = 3_000L

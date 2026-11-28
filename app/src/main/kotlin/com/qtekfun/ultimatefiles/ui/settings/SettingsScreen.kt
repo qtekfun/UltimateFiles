@@ -74,9 +74,17 @@ import androidx.compose.ui.unit.dp
 import com.qtekfun.ultimatefiles.BuildConfig
 import com.qtekfun.ultimatefiles.R
 import com.qtekfun.ultimatefiles.core.model.PanelBarPosition
+import com.qtekfun.ultimatefiles.ui.theme.accentSwatch
+import com.qtekfun.ultimatefiles.core.model.AccentColor
+import androidx.compose.ui.draw.alpha
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.foundation.BorderStroke
 import com.qtekfun.ultimatefiles.core.model.ThemeMode
 import com.qtekfun.ultimatefiles.core.model.UserPreferences
 import com.qtekfun.ultimatefiles.ui.components.CheckNotice
+import com.qtekfun.ultimatefiles.ui.components.openInstallSourceSettings
+import com.qtekfun.ultimatefiles.ui.components.canInstallApps
+import com.qtekfun.ultimatefiles.ui.components.PermissionRow
 import com.qtekfun.ultimatefiles.ui.components.aggressiveBatteryVendor
 import com.qtekfun.ultimatefiles.ui.components.areNotificationsAllowed
 import com.qtekfun.ultimatefiles.ui.components.isIgnoringBatteryOptimizations
@@ -97,6 +105,7 @@ fun SettingsScreen(
     onDismissOutcome: () -> Unit,
     onThemeMode: (ThemeMode) -> Unit,
     onDynamicColor: (Boolean) -> Unit,
+    onAccentColor: (AccentColor) -> Unit,
     onVerifyCopies: (Boolean) -> Unit,
     onThumbnailsOnNetwork: (Boolean) -> Unit,
     onPanelBarPosition: (PanelBarPosition) -> Unit,
@@ -181,6 +190,12 @@ fun SettingsScreen(
                         )
                     }
                 }
+                AccentPicker(
+                    selected = preferences.accentColor,
+                    // Dynamic colours replace the accent, so there is nothing to choose while they are on.
+                    enabled = !preferences.dynamicColor || Build.VERSION.SDK_INT < Build.VERSION_CODES.S,
+                    onSelect = onAccentColor,
+                )
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.settings_dynamic_color)) },
@@ -284,6 +299,41 @@ private const val SOURCE_URL = "https://github.com/qtekfun/UltimateFiles"
 @Composable
 private fun rowColors() = ListItemDefaults.colors(containerColor = Color.Transparent)
 
+/** The accent colours, each a swatch with its name under it. */
+@Composable
+private fun AccentPicker(selected: AccentColor, enabled: Boolean, onSelect: (AccentColor) -> Unit) {
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).alpha(if (enabled) 1f else 0.38f)) {
+        Text(stringResource(R.string.settings_accent), style = MaterialTheme.typography.bodyLarge)
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp).selectableGroup()) {
+            AccentColor.entries.forEach { accent ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .selectable(selected = accent == selected, enabled = enabled, role = Role.RadioButton) { onSelect(accent) }
+                        .padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Box(
+                        modifier = Modifier.size(40.dp).clip(CircleShape).background(accentSwatch(accent)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (accent == selected) Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White)
+                    }
+                    Text(stringResource(accent.labelRes()), style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+    }
+}
+
+private fun AccentColor.labelRes(): Int = when (this) {
+    AccentColor.CYAN -> R.string.accent_cyan
+    AccentColor.BLUE -> R.string.accent_blue
+    AccentColor.PURPLE -> R.string.accent_purple
+    AccentColor.SLATE -> R.string.accent_slate
+}
+
 /** A titled card holding the rows of one kind of setting. */
 @Composable
 private fun SettingsGroup(@StringRes title: Int, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
@@ -303,6 +353,7 @@ private fun SettingsGroup(@StringRes title: Int, icon: ImageVector, content: @Co
         Surface(
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainer,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(content = content)
@@ -373,6 +424,7 @@ private fun ReliabilitySection() {
     val notifications by rememberCheck { areNotificationsAllowed(context) }
     val channel by rememberCheck { isProgressChannelUsable(context) }
     val battery by rememberCheck { isIgnoringBatteryOptimizations(context) }
+    val installApps by rememberCheck { canInstallApps(context) }
     val vendor = remember { aggressiveBatteryVendor() }
 
     SettingsGroup(R.string.settings_reliability, Icons.Filled.HealthAndSafety) {
@@ -399,5 +451,6 @@ private fun ReliabilitySection() {
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
+    PermissionRow(R.string.check_install_apps, installApps) { openInstallSourceSettings(context) }
     }
 }

@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">UltimateFiles</string>
     <string name="panel_tab_format">Panel %1$d</string>
-    <string name="panel_add">Add panel</string>
     <string name="panel_close">Close panel</string>
     <string name="storage_internal">Internal storage</string>
     <string name="transfer_channel_name">File transfers</string>
@@ -88,7 +87,15 @@
     <string name="drop_copy">Copy</string>
     <string name="drop_move">Move</string>
     <string name="transfer_speed">%1$s/s</string>
-    <string name="install_permission_needed">Allow UltimateFiles to install apps in this screen, then open the APK again.</string>
+    <string name="install_permission_title">Allow installing apps</string>
+    <string name="install_permission_needed">To install %1$s, Android has to allow UltimateFiles to install apps. Turn on the switch in the next screen and come back.</string>
+    <string name="install_permission_open_settings">Open settings</string>
+    <string name="install_permission_denied">Installing apps is not allowed, so the APK was not opened.</string>
+    <string name="check_install_apps">Install apps</string>
+    <string name="permission_granted">Granted</string>
+    <string name="permission_not_granted">Not granted</string>
+    <string name="permission_change">Change</string>
+    <string name="permission_allow">Allow</string>
     <string name="incoming_failed">Could not open the archive: %1$s</string>
     <string name="error_archive_open">Copy the file out of the archive to open it.</string>
     <string name="error_open_failed">Could not open the file: %1$s</string>
@@ -216,7 +223,6 @@
     <string name="check_all_ok">Everything looks fine.</string>
     <string name="viewer_unsupported">This file cannot be shown here.</string>
     <string name="viewer_error">Cannot show this file</string>
-    <string name="viewer_truncated">Showing only the first megabyte.</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_export">Export settings and accounts</string>
     <string name="settings_export_summary">Save your settings and Nextcloud accounts to a file</string>
@@ -320,4 +326,25 @@
     <string name="connection_edit_account">Edit account</string>
     <string name="account_error_offline">No network connection.</string>
     <string name="account_error_no_response">The server did not answer. Check the address and the port.</string>
+    <string name="browser_space_free">%1$s free</string>
+    <string name="panel_menu">Panels</string>
+    <string name="settings_accent">Accent color</string>
+    <string name="accent_cyan">Cyan</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_purple">Purple</string>
+    <string name="accent_slate">Slate</string>
+    <plurals name="item_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <string name="action_add_favorite">Add to favorites</string>
+    <string name="action_remove_favorite">Remove from favorites</string>
+    <string name="drawer_favorites">Favorites</string>
+    <string name="category_images">Images</string>
+    <string name="category_video">Video</string>
+    <string name="category_audio">Audio</string>
+    <string name="category_documents">Documents</string>
+    <string name="category_apks">APKs</string>
+    <string name="category_recents">Recent</string>
+    <string name="error_category_read_only">Not possible here: these files come from several folders.</string>
 </resources>
