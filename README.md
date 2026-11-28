@@ -147,16 +147,15 @@ extra battery manager of their own; if copies still stop, look for UltimateFiles
 ./gradlew testDebugUnitTest lintDebug assembleDebug
 ```
 
-Java 21, Kotlin 2.x, Jetpack Compose with Material 3, Koin, DataStore and OkHttp. See [PRD.md](PRD.md),
-[ARCHITECTURE.md](ARCHITECTURE.md) and [TASK_PLAN.md](TASK_PLAN.md).
+Java 21, Kotlin 2.x, Jetpack Compose with Material 3, Koin, DataStore and OkHttp. See [PRD.md](PRD.md) and
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
 The Nextcloud tests run against an in-memory fake server, and the 8 GiB copy test against a generated stream: they are no
 substitute for a real test on a device.
 
 ## CI/CD
 
-- `ci.yml`: tests, version check, lint, debug APK and a release build on every PR and push to `master` and `claude/**`
-  branches.
+- `ci.yml`: tests, version check, lint, debug APK and a release build on every PR and push to `master`.
 - `ui-tests.yml`: instrumented Compose UI tests on an emulator.
 - GitGuardian: secret scanning through its GitHub app, with no workflow or API key.
 - `release.yml`: a `vX.Y.Z` tag publishes the **official release** (`UltimateFiles-X.Y.Z.apk`, signed with the project key,
