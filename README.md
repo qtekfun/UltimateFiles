@@ -139,8 +139,6 @@ extra battery manager of their own; if copies still stop, look for UltimateFiles
 - **Releases:** download the signed APK from the [latest release](https://github.com/qtekfun/UltimateFiles/releases/latest).
   Releases are signed with the project key; check the certificate with
   `apksigner verify --print-certs UltimateFiles-X.Y.Z.apk`.
-- **Nightlies:** every push to `master` publishes a pre-release with its own application id
-  (`com.qtekfun.ultimatefiles.nightly`), so it installs next to the official app.
 - **F-Droid:** the build recipe lives in [`fdroid/`](fdroid) and is being submitted. See [docs/FDROID.md](docs/FDROID.md).
 
 ## Development
@@ -162,7 +160,7 @@ substitute for a real test on a device.
 - `ui-tests.yml`: instrumented Compose UI tests on an emulator.
 - GitGuardian: secret scanning through its GitHub app, with no workflow or API key.
 - `release.yml`: a `vX.Y.Z` tag publishes the **official release** (`UltimateFiles-X.Y.Z.apk`, signed with the project key,
-  notes taken from `CHANGELOG.md`; it fails without the `UF_*` secrets). Every push to `master` publishes a **nightly**.
+  notes taken from `CHANGELOG.md`; it fails without the `UF_*` secrets).
   How to sign and publish: [RELEASING.md](RELEASING.md).
 - `reproducible.yml`: builds the release twice from different directories and compares the APKs the way F-Droid does.
 - Dependabot: Gradle and GitHub Actions, weekly.

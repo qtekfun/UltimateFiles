@@ -18,12 +18,6 @@ fun versionCodeOf(version: String): Int {
     return (major.toInt() * 10000 + minor.toInt() * 100 + patch.toInt()) * 100 + release
 }
 
-// Master builds are published as "nightly": a different application id, so they install next to the official release
-// instead of racing its version code: a nightly's code is just the workflow run number. Official releases are built
-// without this flag.
-val nightly = (findProperty("nightly") as String?) == "true"
-val nightlyRun = (findProperty("nightlyRun") as String?)?.toIntOrNull() ?: 0
-
 // Signing material comes from the environment so no secret ever lives in the repo.
 val signingKeystore: String? = System.getenv("UF_KEYSTORE_FILE")
 
@@ -39,9 +33,8 @@ android {
         applicationId = "com.qtekfun.ultimatefiles"
         minSdk = 26
         targetSdk = 35
-        versionCode = if (nightly) nightlyRun else versionCodeOf(appVersion)
-        versionName = if (nightly) "$appVersion-nightly.$nightlyRun" else appVersion
-        if (nightly) applicationIdSuffix = ".nightly"
+        versionCode = versionCodeOf(appVersion)
+        versionName = appVersion
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -61,13 +54,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Without a release keystore the APK stays unsigned (what F-Droid builds and then re-signs or verifies),
-            // unless -PdebugSigning=true asks for an installable build signed with the debug key (nightlies).
-            signingConfig = when {
-                signingKeystore != null -> signingConfigs.getByName("release")
-                (findProperty("debugSigning") as String?) == "true" -> signingConfigs.getByName("debug")
-                else -> null
-            }
+            // Without a release keystore the APK stays unsigned (what F-Droid builds and then re-signs or verifies).
+            signingConfig = if (signingKeystore != null) signingConfigs.getByName("release") else null
         }
     }
 
