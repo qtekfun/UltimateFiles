@@ -18,7 +18,8 @@ permissions:
 
 jobs:
   compare:
-    runs-on: ubuntu-latest
+    # apksigner on newer images (35.x) breaks the apksigcopier comparison.
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
