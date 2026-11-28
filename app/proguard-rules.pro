@@ -34,3 +34,9 @@
 -dontwarn javax.annotation.**
 -dontwarn org.ietf.jgss.**
 -dontwarn com.hierynomus.**
+
+# Reproducible builds: R8 does not always narrow the continuation parameter of this coroutines helper the same way
+# from one build to the next. Keeping it unoptimised gives the same bytes every time.
+-keepclassmembers,allowshrinking,allowobfuscation class kotlinx.coroutines.flow.FlowKt__LimitKt {
+    *** emitAbort$FlowKt__LimitKt(...);
+}
