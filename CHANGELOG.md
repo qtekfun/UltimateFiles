@@ -4,6 +4,9 @@ All notable changes. Versions follow [SemVer](https://semver.org/); the notes of
 
 ## [Unreleased]
 
+### Fixed
+- Building the same source twice now gives the same release APK.
+
 ## [0.11.0] - 2026-11-28
 
 ### Added
